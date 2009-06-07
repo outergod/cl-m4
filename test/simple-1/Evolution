@@ -1,0 +1,23 @@
+;; -*- mode: lisp -*-
+(asdf:oos 'asdf:load-op :evol)
+
+(defparameter *cc* "cc")
+(defparameter *objects* '("main.o" "program.o"))
+
+(defun do-objects ()
+  (mapc #'(lambda (pathname)
+            (external-program:run *cc* (list "-c" "-o" pathname (evol:pathname-change-suffix "c" pathname))
+                                  :output *standard-output*))
+        *objects*))
+
+(defun do-main ()
+  (do-objects)
+  (external-program:run *cc* `(,@*objects* "-o" "main")
+                        :output *standard-output*))
+
+(defun do-all ()
+  (do-main))
+
+(defun do-clean ()
+  (external-program:run "rm" `("-f" ,@*objects* "main")
+                        :output *standard-output*))
