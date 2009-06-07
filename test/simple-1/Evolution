@@ -6,8 +6,7 @@
 
 (defun do-objects ()
   (mapc #'(lambda (pathname)
-            (external-program:run *cc* (list "-c" "-o" pathname (evol:pathname-change-suffix "c" pathname))
-                                  :output *standard-output*))
+            (evol:shell *cc* " -c -o " pathname (evol:pathname-change-suffix "c" pathname)))
         *objects*))
 
 (defun do-main ()
