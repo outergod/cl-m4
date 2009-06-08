@@ -6,7 +6,9 @@
 
 (defun do-objects ()
   (mapc #'(lambda (pathname)
-            (evol:shell *cc* " -c -o " pathname (evol:pathname-change-suffix "c" pathname)))
+            (evol:shell *cc* (evol:interpolate-commandline " -c -o %@ %<" pathname
+                                                           #'(lambda (pathname)
+                                                               (evol:pathname-change-suffix "c" pathname)))))
         *objects*))
 
 (defun do-main ()
