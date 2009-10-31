@@ -1,24 +1,29 @@
 ;; -*- mode: lisp -*-
 (asdf:oos 'asdf:load-op :evol)
 
-(defparameter *cc* "cc")
-(defparameter *objects* '("main.o" "program.o"))
+(evol:defenv "cc" "cc")
+(evol:defenv "objects" '("main.o" "program.o"))
+(evol:defenv "program" "main")
 
 (defun do-objects ()
   (mapc #'(lambda (pathname)
-            (evol:shell *cc* (evol:interpolate-commandline " -c -o %@ %<" pathname
-                                                           #'(lambda (pathname)
-                                                               (evol:pathname-change-suffix "c" pathname)))))
-        *objects*))
+            (evol:run-command "%cc -c -o %@ %<"
+                              :target pathname
+                              :sourcefn #'(lambda (target modifier)
+                                            (declare (ignore modifier))
+                                            (evol:pathname-change-suffix "c" target))))
+        (evol:getenv "objects")))
 
 (defun do-main ()
   (do-objects)
-  (external-program:run *cc* `(,@*objects* "-o" "main")
-                        :output *standard-output*))
+  (evol:run-command "%cc %< -o %@"
+                    :target (evol:getenv "program")
+                    :sourcefn #'(lambda (target modifier)
+                                  (declare (ignore target modifier))
+                                  (evol:getenv "objects"))))
 
-(defun do-all ()
-  (do-main))
+(defun do-all () (do-main))
 
 (defun do-clean ()
-  (external-program:run "rm" `("-f" ,@*objects* "main")
-                        :output *standard-output*))
+  (evol:run-command "rm -f %@" :target (cons (evol:getenv "program")
+                                             (evol:getenv "objects"))))
