@@ -1,3 +1,10 @@
+dnl`1
+dnl_foo 1
+dnl4 2
+dnl'foo 3
+dnl#foo 4
+dnl`foo' 5
+dnlfoo? 6
 abc # def
 abc dnl def
 abc#def
@@ -8,6 +15,18 @@ dnl `abc'
 # `abc'
 #abc
 #`abc'
-format(`%d', 14)
-# format(`%d', 14)
-`format(`%d', 14)'
+format(`%d',14)
+# format(`%d',14)
+`format(`%d',14)'
+breakpoint
+`dnl foo'
+`# foo'
+``foo''
+``foo'
+test
+``foo'''
+```foo'''
+`foo
+bar'
+``foo'bar`baz''
+dnl
