@@ -16,6 +16,8 @@
 
 (in-package :evol)
 
+(defvar *m4-quoting-level*)
+
 (dso-lex:deflexer scan-m4 (:priority-only t)
   (" " :space)
   ("\\n" :newline)
@@ -25,34 +27,78 @@
   ("," :comma)
   ("`" :quote-start)
   ("'" :quote-end)
-  ("\\d+" :integer)
+  ("#" :comment)
+  ("dnl" :dnl)
   ("[_\\w][_\\w\\d]*" :macro-name)
-  ("[^ \\n\\$(),`']+" :string))
+  ("[^ \\n\\$(),`'#]+" :string))
+
+  ;; ("#[^\\n]*\\n" :comment)
+  ;; ("dnl[^\\n]*\\n" :dnl)
 
 (defun m4-lexer (string)
-  (let ((tokens (dso-lex:lex-all 'scan-m4 string)))
+  (let ((start 0))
     #'(lambda ()
-        (let ((token (pop tokens)))
-          (values (car token) (cdr token))))))
+        (multiple-value-bind (class image remainder)
+          (scan-m4 string start)
+          (setq start remainder)
+          (values class image)))))
+
+  ;; (let ((tokens (dso-lex:lex-all 'scan-m4 string)))
+  ;;   #'(lambda ()
+  ;;       (let ((token (pop tokens)))
+  ;;         (values (car token) (cdr token))))))
+
+(defun m4-call-macro (macro args)
+  (declare (ignore args))
+  macro)
 
 (fucc:defparser *m4-parser*
-  m4 (:integer :dollar :open-paren :close-paren
+  m4 (:dollar :open-paren :close-paren
       :space :newline :comma :quote-start :quote-end
-      :macro-name :string)
+      :macro-name :string :comment :dnl)
   ((m4 = (:var token-list (cl:* token))
-       (:do (format t "token-list is ~s~%" token-list)))
+       (:do (format nil "~{~a~}" token-list)))
    (token = string
-          = :space
-          = :newline
-          = :comma
-          = :dollar)
+          = character)
+   (character = :space
+              = :newline
+              = :comma
+              = :dollar)
    (string = macro-invocation
            = quoted-string
-           = :string
-           = :integer)
-   (quoted-string = :quote-start (:var string (:maybe token)) :quote-end
-                  (:do (progn
-                         (format t "quoted string ~s~%" string)
+           = dnl
+           = :comment
+           = :string)
+   (dnl = :dnl (:var first (:or character :string :quote-start :quote-end))
+               (:var rest (cl:* (:or :dnl :string :comment
+                                     :macro-name :open-paren :close-paren
+                                     :quote-start :quote-end
+                                     character)))
+               (:var newline (:maybe :newline))
+        (:do (if (> *m4-quoting-level* 1)
+                 (format nil "dnl~a~{~a~}~a" first rest newline)
+               "")))
+   (comment = :comment
+               (:var rest (cl:* (:or :dnl :string :comment
+                                     :macro-name :open-paren :close-paren
+                                     :quote-start :quote-end
+                                     character)))
+               (:var newline (:maybe :newline))
+        (:do (if (> *m4-quoting-level* 1)
+                 (format nil "#~{~a~}~a" rest newline)
+               "")))
+   (quote-start = (:var quote :quote-start)
+                (:do (incf *m4-quoting-level*)
+                     quote))
+   (quote-end = (:var quote :quote-end)
+              (:do (decf *m4-quoting-level*)
+                   quote))
+   (quoted-string = quote-start (:var string (cl:* (:or :dnl :string :comment
+                                                        :macro-name :open-paren :close-paren
+                                                        character quoted-string))) quote-end
+                  (:do (format t "[~d] quoted string ~s~%" *m4-quoting-level* string)
+                       (if (> *m4-quoting-level* 1)
+                           (format nil "`~a'" string)
                          string)))
    (macro-invocation = (:var name :macro-name)
                        (:var arguments (:maybe :open-paren
@@ -60,8 +106,9 @@
                                                :close-paren))
                        (:do (progn
                               (format t "macro invocation ~s with args ~s~%" name arguments)
-                              (list name arguments)))))
+                              (m4-call-macro name arguments)))))
   :type :lalr)
 
 (defun test-m4 (string)
-  (fucc:parser-lr (m4-lexer string) *m4-parser*))
+  (let ((*m4-quoting-level* 0))
+    (fucc:parser-lr (m4-lexer string) *m4-parser*)))
