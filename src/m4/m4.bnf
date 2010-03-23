@@ -1,0 +1,44 @@
+;;;; evol - m4.bnf
+;;;; Copyright (C) 2010  Alexander Kahl <e-user@fsfe.org>
+;;;; This file is part of evol.
+;;;; evol is free software; you can redistribute it and/or modify
+;;;; it under the terms of the GNU General Public License as published by
+;;;; the Free Software Foundation; either version 3 of the License, or
+;;;; (at your option) any later version.
+;;;;
+;;;; evol is distributed in the hope that it will be useful,
+;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;; GNU General Public License for more details.
+;;;;
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+m4 = {token}.
+
+token = macro_invocation
+      | quoted_string
+      | character
+      .
+
+macro_invocation = macro_name ["(" {token ","} ")"].
+
+dnl = "dnl" character_except_newline "\\n".
+
+comment = "#" {character_except_newline} "\\n".
+
+character_except_newline = "[^\\n\\001-\\010\\012-\\255]".
+
+character = "[\\001-\\255]".
+
+letter = "[a-zA-Z]".
+
+digit = "[0-9]".
+
+underscore = "_".
+
+macro_name = (letter | underscore) {letter | digit | underscore}.
+
+quoted_string = "`" {character} "'"
+              | "[" {character} "]"
+              .
