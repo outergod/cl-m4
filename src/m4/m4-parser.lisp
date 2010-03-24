@@ -18,6 +18,15 @@
 
 (defvar *m4-quoting-level*)
 
+(defun split-merge (string-list split-string)
+  (labels ((acc (rec string rest)
+                (let ((char (car rest)))
+                  (cond ((null char) (nreverse rec))
+                        ((string= split-string (car rest))
+                         (acc (cons string rec) "" (cdr rest)))
+                        (t (acc rec (concatenate 'string string char) (cdr rest)))))))
+          (acc (list) "" string-list)))
+
 (dso-lex:deflexer scan-m4 (:priority-only t)
   (" " :space)
   ("\\n" :newline)
@@ -39,11 +48,11 @@
         (multiple-value-bind (class image remainder)
           (scan-m4 string start)
           (setq start remainder)
-          (format t "processing token ~a ~a~%" class image)
+          ;(format t "processing token ~a ~a~%" class image)
           (values class image)))))
 
 (defun m4-call-macro (macro args)
-  (declare (ignore args))
+  (format t "macro invocation ~a with args ~s~%" macro args)
   macro)
 
 (fucc:defparser *m4-parser*
@@ -79,22 +88,30 @@
                                             :space :newline :comma :dollar
                                             quoted-string)))
                     (:var quote-end quote-end)
-                  (:do (format t "[~d] quoted string ~{~a~}~%" *m4-quoting-level* string)
-                       (if (> *m4-quoting-level* 0)
+                  (:do (if (> *m4-quoting-level* 0)
                            (format nil "~a~{~a~}~a" quote-start string quote-end)
                          (format nil "~{~a~}" string))))
    (macro-start = (:var start (:or :dnl :macro-start)) (:var rest (cl:+ (:or :name :macro-start :dnl)))
                 (:do (format nil "~a~{~a~}" start rest)))
    (macro-invocation = (:var name macro-start)
-                       (:var arguments (:maybe :open-paren
-                                               (:maybe (:list token :comma))
-                                               :close-paren))
-                       (:do (format t "macro invocation ~a with args ~s~%" name (cadr (butlast arguments)))
-                            (m4-call-macro name (cadr (butlast arguments))))))
+                       (:var arguments (:maybe :open-paren (cl:* token) :close-paren))
+                       (:do (m4-call-macro name (when arguments
+                                                  (or (split-merge (cadr (butlast arguments)) ",")
+                                                      "")))))) ; http://www.gnu.org/software/m4/manual/m4.html#Invocation
   :prec-info ((:right :macro-start :dnl :comment)
               (:left :dollar :space :newline :comma :string :name :quote-start))
   :type :lalr)
 
+
+                       ;; (:var arguments (:maybe :open-paren
+                       ;;                         (:maybe (:list (cl:* token) :comma))
+                       ;;                         :close-paren))
+                       ;; (:do (m4-call-macro name (when arguments
+                       ;;                            (or (caadr (butlast arguments))
+                       ;;                                "")))))) ; http://www.gnu.org/software/m4/manual/m4.html#Invocation
+
 (defun test-m4 (string)
   (let ((*m4-quoting-level* 0))
     (fucc:parser-lr (m4-lexer string) *m4-parser*)))
+
+;(list "%d ?" " " "?" " " " " " " "?" "," " " ",")
