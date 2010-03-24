@@ -17,6 +17,9 @@ dnl `abc'
 #abc
 #`abc'
 format(`%d',14)
+format()
+spaces: format(`%d ?' ?   ?, 14 5)
+noargs: format(,14)
 test: format(# %d %d?
 ,14,18)
 # format(`%d',14)
