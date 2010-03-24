@@ -1,4 +1,5 @@
-dnl`1
+dnl#-1
+dnl`0
 dnl_foo 1
 dnl4 2
 dnl'foo 3
@@ -16,6 +17,8 @@ dnl `abc'
 #abc
 #`abc'
 format(`%d',14)
+test: format(# %d %d?
+,14,18)
 # format(`%d',14)
 `format(`%d',14)'
 breakpoint
