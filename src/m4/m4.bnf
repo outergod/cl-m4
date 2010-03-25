@@ -14,31 +14,58 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-m4 = {token}.
+M4 = {token}.
 
-token = macro_invocation
-      | quoted_string
-      | character
+TOKEN = MACRO_INVOCATION 
+      | QUOTED_STRING
+      | DNL
+      | COMMENT
+      | STRING
       .
 
-macro_invocation = macro_name ["(" {token ","} ")"].
+STRING = space
+       | newline
+       | comma
+       | string
+       | dnl
+       | name
+       | open_paren
+       | close_paren
+       .
 
-dnl = "dnl" character_except_newline "\\n".
+DNL = dnl newline
+    | dnl (space | comma | quote_start | quote_end | comment) {open_paren | close_paren | space | comma | quote_start | quote_end | macro_start | name | string | comment | dnl} newline
+    .
 
-comment = "#" {character_except_newline} "\\n".
+COMMENT = comment {open_paren | close_paren | space | comma | quote_start | quote_end | macro_start | name | string | comment | dnl} newline.
 
-character_except_newline = "[^\\n\\001-\\010\\012-\\255]".
+QUOTED_STRING = quote_start {dnl | string | comment | macro_start | name | open_paren | close_paren | space | newline | comma | QUOTED_STRING} quote_end.
 
-character = "[\\001-\\255]".
+MACRO_START = (dnl | macro_start) {name | macro_start | dnl}+.
 
-letter = "[a-zA-Z]".
+MACRO_INVOCATION = MACRO_START
+                 | MACRO_START open_paren {MACRO_INVOCATION | QUOTED_STRING | DNL | COMMENT | space | newline | comma | string | name} close_paren.
 
-digit = "[0-9]".
+space = " ".
 
-underscore = "_".
+newline = "\\n".
 
-macro_name = (letter | underscore) {letter | digit | underscore}.
+open_paren = "\(".
 
-quoted_string = "`" {character} "'"
-              | "[" {character} "]"
-              .
+close_paren = "\)".
+
+comma = ",".
+
+quote_start = "`".
+
+quote_end = "'".
+
+comment = "#".
+
+dnl = "dnl".
+
+macro_start = "[_a-zA-Z]".
+
+name = "\\w+".
+
+string = "[^ \\n(,`'#]+".
