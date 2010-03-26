@@ -1,3 +1,7 @@
+dnl_with_args:                 dnl(foo)
+(blank_line)
+dnl_with_empty_args:           dnl()
+(blank_line)
 dnl_quote_start:               dnl`0
 (blank_line)
 dnl_underscore:                dnl_foo 1
@@ -47,4 +51,9 @@ single_quote_newline:
 bar'
 single_quote_newline_end
 cascaded_quote:                ``foo'bar`baz''
+number_followed_macro_name:    4format(`%d',14)
+number_followed_dnl:           4dnl foo
+(blank_line)
+underscore_followed_dnl:       _dnl foo
+macro_followed_string:         format(`%d',14):
 dnl_at_end:                    dnl
