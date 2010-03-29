@@ -15,8 +15,9 @@
 ;;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (in-package :evol)
+(use-package '#:dso-parse)
 
-(define-condition macro-invocation-condition (fucc:parse-error-condition)
+(define-condition macro-invocation-condition (error)
   ((result :initarg :result
            :reader macro-invocation-result)))
 
@@ -29,6 +30,26 @@
                         (t (acc rec (concatenate 'string string char) (cdr rest)))))))
           (acc (list) "" string-list)))
 
+(defvar *m4-quoting-level*)
+(defvar *m4-string*)
+
+(defun m4-call-macro (macro args)
+  (format t "macro invocation ~a with args ~s~%" macro args)
+  (cond
+   ((string= "dnl" macro)
+    (progn
+      (let ((position (search (string #\newline) *m4-string*)))
+        (setq *m4-string*
+              (subseq *m4-string*
+                      (if position
+                          (1+ position)
+                        (length *m4-string*)))))
+      ""))
+    ((string= "format" macro)
+     (cerror "Use result of macro invocation" 'macro-invocation-condition :result "$")
+     "")
+    (t macro)))
+                  
 (dso-lex:deflexer scan-m4 (:priority-only t)
   (" " :space)
   ("\\n" :newline)
@@ -38,82 +59,38 @@
   ("`" :quote-start)
   ("'" :quote-end)
   ("#" :comment)
+  ("dnl[^\\w]" :dnl)
   ("[_a-zA-Z]\\w+" :macro-name)
   ("[^ \\n(),`'#]" :token))
 
-(defvar *m4-quoting-level*)
-(defvar *m4-string*)
+(defgrammar ()
+  (m4 (* token))
+  (token (/ comment m4-string newline))
+  (comment (#\# (^ "[^\\n]*\\n")) :filter #'(lambda (s)
+                                           (format t "~a~%" s)))
+  (m4-string (^ "."))
+  (newline (^ "\\n")))
 
-(defun m4-lexer ()
-  (let ((m4-macro-level 0))
-    #'(lambda ()
-        (if (> m4-macro-level 0)
-            (progn
-              (decf m4-macro-level)
-              (format t "read token [~a] of class [~a]~%" "" :macro-block)
-              (values :macro-block ""))
-          (multiple-value-bind (class image remainder)
-              (scan-m4 *m4-string*)
-            (format t "read token [~a] of class [~a]~%" image class)
-            (when remainder
-              (setq *m4-string* (subseq *m4-string* remainder)))
-            (when (or (equal :macro-name class)
-                      (equal :close-paren class))
-              (incf m4-macro-level))
-            (values class image))))))
 
-(defun m4-call-macro (macro args)
-  (format t "macro invocation ~a with args ~s~%" macro args)
-  (cond
-   ((string= "dnl" macro)
-    (progn
-      (setq *m4-string* (subseq *m4-string*
-                                (or (search (string #\newline) *m4-string*)
-                                    (length *m4-string*))))
-      ""))
-    ((string= "format" macro)
-     (cerror "Use result of macro invocation" 'macro-invocation-condition :result "$")
-     "")
-    (t macro)))
 
-(fucc:defparser *m4-parser*
-  m4 (:open-paren :close-paren :space :newline :comma :quote-start :quote-end :macro-name :token :comment :macro-block)
-  ((m4 = (:var token-list (cl:* token))
-       (:do (format nil "~{~a~}" token-list)))
-   (token = (:or macro-invocation quoted-string comment string))
-   (string = (:or :space :newline :comma :token :open-paren :close-paren))
-   (comment = :comment
-               (:var rest (cl:* (:or :open-paren :close-paren :space :comma :quote-start :quote-end :macro-name :token :comment)))
-               (:var newline :newline)
-        (:do (format nil "#~{~a~}~a" rest newline)))
-   (quote-start = (:var quote :quote-start)
-                (:do (incf *m4-quoting-level*)
-                     quote))
-   (quote-end = (:var quote :quote-end)
-              (:do (decf *m4-quoting-level*)
-                   quote))
-   (quoted-string = (:var quote-start quote-start)
-                    (:var string (cl:* (:or :token :comment
-                                            :macro-name
-                                            :open-paren :close-paren
-                                            :space :newline :comma
-                                            quoted-string)))
-                    (:var quote-end quote-end)
-                  (:do (if (> *m4-quoting-level* 0)
-                           (format nil "~a~{~a~}~a" quote-start string quote-end)
-                         (format nil "~{~a~}" string))))
-   (macro-invocation = (:var name :macro-name) :macro-block
-                     (:do (m4-call-macro name nil))
-                     = (:var name :macro-name) :macro-block
-                       :open-paren (:var arguments (cl:* (:or macro-invocation quoted-string comment :space :newline :comma :token))) :close-paren
-                       (:do (m4-call-macro name (or (mapcar #'(lambda (string)
-                                                                  (string-left-trim " " string))
-                                                              (split-merge arguments ","))
-                                                      ""))))) ; http://www.gnu.org/software/m4/manual/m4.html#Invocation
-  :prec-info ((:right :macro-name :comment)
-              (:right :open-paren :macro-block)
-              (:left :space :newline :comma :token :quote-start))
-  :type :lalr)
+
+  (file2 (+ row2))
+  (row2 (value (* row-rest2) (= newline))
+       :filter (lambda (row) (cons (car row) (mapcar #'second (second row)))))
+  (row-rest2 ((= comma) value) :filter 'identity)
+  (squoted-value ((= #\') (^ "([^']|'')+") (= #\'))
+                 :cclass t
+                 :filter
+                 (lambda (s) (cl-ppcre:regex-replace-all "''" (car s) "'")))
+  (dquoted-value ((= #\") (^ "([^\"]|\"\")+") (= #\"))
+                 :cclass t
+                 :filter
+                 (lambda (s) (cl-ppcre:regex-replace-all "\"\"" (car s) "\"")))
+  (unquoted-value (^ "[^,'\"\\n\\r]+") :cclass t)
+  (value (/ squoted-value dquoted-value unquoted-value) :cclass t)
+  (newline (^ "\\r\\n?|\\n"))
+  (comma #\,))
+
 
 (defun test-m4 (string)
   (let ((*m4-quoting-level* 0)
@@ -122,4 +99,4 @@
                     #'(lambda (error)
                         (setq *m4-string* (concatenate 'string (macro-invocation-result error) *m4-string*))
                         (invoke-restart 'continue))))
-                  (fucc:parser-lr (m4-lexer) *m4-parser*))))
+                  (m4 *m4-string*))))
