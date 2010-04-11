@@ -16,3 +16,16 @@
 
 (in-package :evol)
 
+(defparameter *m4-lib* (make-hash-table :test #'equal))
+
+(defmacro defm4macro (name args &body body)
+  (let ((macro-args (gensym)))
+    `(setf (gethash ,name *m4-lib*)
+           #'(lambda (&rest ,macro-args)
+               (when (> (length ,macro-args) (length ',args))
+                 (warn (format nil "excess arguments to builtin `~a' ignored" ,name)))
+               (destructuring-bind ,args ,macro-args
+                 ,@body)))))
+
+(defun m4-macro-exists (macro)
+  (gethash macro *m4-lib*))
