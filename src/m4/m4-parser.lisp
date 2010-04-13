@@ -16,10 +16,6 @@
 
 (in-package :evol)
 
-(define-condition macro-invocation-condition (error)
-  ((result :initarg :result
-           :reader macro-invocation-result)))
-
 (defun split-merge (string-list split-string)
   (labels ((acc (rec string rest)
                 (let ((char (car rest)))
@@ -46,12 +42,11 @@
 
 (defun call-m4-macro (macro args)
   (let ((macrofun (m4-macro macro)))
-    (cond (macrofun (error 'macro-invocation-condition
-                           :result (if args
-                                       (apply macrofun (mapcar #'(lambda (string)
-                                                                   (string-left-trim " " string))
-                                                               (split-merge args ",")))
-                                     (funcall macrofun))))
+    (cond (macrofun (if args
+                        (apply macrofun (mapcar #'(lambda (string)
+                                                    (string-left-trim " " string))
+                                                (split-merge args ",")))
+                      (funcall macrofun)))
           (args (format nil "~a(~{~a~})" macro args))
           (t macro))))
 
@@ -128,6 +123,7 @@
    (macro-dnl-invocation-condition ()
      (parse-m4-dnl lexer))
    (macro-invocation-condition (condition)
+     (format t "condition with result ~a~%" (macro-invocation-result condition))
      (setq *m4-string* (concatenate 'string
                                     (macro-invocation-result condition)
                                     *m4-string*))
