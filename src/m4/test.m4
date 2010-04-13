@@ -57,4 +57,6 @@ number_followed_dnl:           4dnl foo
 underscore_followed_dnl:       _dnl foo
 macro_followed_string:         format(`%d',14):
 gnu_m4_man_4.4:                foo(() (`(') `(')
+define_foo:                    define(`foo',`bar')
+call_foo:                      foo(foo)
 dnl_at_end:                    dnl
