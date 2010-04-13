@@ -45,18 +45,19 @@
   ("[^ \\n(),`'#]" :token))
 
 (defun call-m4-macro (macro args)
-  (format t "macro invocation ~a with args ~s~%" macro args)
-  (cond
-   ((string= "format" macro)
-    (error 'macro-invocation-condition :result "$"))
-   (t (if args
-          (format nil "~a(~{~a~})" macro args)
-        macro))))
+  (let ((macrofun (m4-macro macro)))
+    (cond (macrofun (error 'macro-invocation-condition
+                           :result (if args
+                                       (apply macrofun (mapcar #'(lambda (string)
+                                                                   (string-left-trim " " string))
+                                                               (split-merge args ",")))
+                                     (funcall macrofun))))
+          (args (format nil "~a(~{~a~})" macro args))
+          (t macro))))
 
 (defun m4-lexer (&optional (peek nil))
   (multiple-value-bind (class image remainder)
       (scan-m4 *m4-string*)
-    (format t "read token [~a] of class [~a]~%" image class)
     (when (and remainder (null peek))
       (setq *m4-string* (subseq *m4-string* remainder)))
     (values class image)))
@@ -109,25 +110,23 @@
                      (t (m4-macro-arguments (cons image rec) paren-level))))))
     (m4-macro-arguments (list "") 1)))
 
+(defun parse-m4-dnl (lexer)
+  (do ((class (funcall lexer) (funcall lexer)))
+      ((or (equal :newline class)
+           (null class)) "")))
+
 (defun parse-m4-macro (lexer macro-name)
   (handler-case
    (multiple-value-bind (class image)
        (funcall lexer t)
      (declare (ignore image))
-     (cond ((string= "dnl" macro-name)
-            (when (equal :open-paren class)
-              (warn "excess arguments to builtin `dnl' ignored"))
-            (let ((position (search (string #\newline) *m4-string*)))
-              (setq *m4-string*
-                    (if position
-                        (subseq *m4-string* (1+ position))
-                      ""))
-              ""))
-           ((equal :open-paren class)
-            (funcall lexer) ; consume token
-            (call-m4-macro macro-name
-                           (parse-m4-macro-arguments lexer)))
-           (t (call-m4-macro macro-name nil))))
+     (if (equal :open-paren class)
+         (progn
+           (funcall lexer) ; consume token
+           (call-m4-macro macro-name (parse-m4-macro-arguments lexer)))
+       (call-m4-macro macro-name nil)))
+   (macro-dnl-invocation-condition ()
+     (parse-m4-dnl lexer))
    (macro-invocation-condition (condition)
      (setq *m4-string* (concatenate 'string
                                     (macro-invocation-result condition)
@@ -149,7 +148,7 @@
                      (t (m4 (cons image rec)))))))
     (m4 (list))))
 
-(defun test-m4 (string)
+(defun process-m4 (string)
   (let ((*m4-quoting-level* 0)
         (*m4-string* (copy-seq string)))
-    (parse-m4 #'m4-lexer)))
+    (with-m4-lib (parse-m4 #'m4-lexer))))

@@ -16,16 +16,31 @@
 
 (in-package :evol)
 
-(defparameter *m4-lib* (make-hash-table :test #'equal))
+(define-condition macro-dnl-invocation-condition (error) ())
+
+(defvar *m4-lib*)
 
 (defmacro defm4macro (name args &body body)
-  (let ((macro-args (gensym)))
+  (let ((macro-args (gensym))
+        (ignored-rest (gensym)))
     `(setf (gethash ,name *m4-lib*)
            #'(lambda (&rest ,macro-args)
-               (when (> (length ,macro-args) (length ',args))
-                 (warn (format nil "excess arguments to builtin `~a' ignored" ,name)))
-               (destructuring-bind ,args ,macro-args
+               (destructuring-bind (,@args &rest ,ignored-rest) ,macro-args
+                 (when ,ignored-rest
+                   (format *error-output* "excess arguments to builtin `~a' ignored~%" ,name))
                  ,@body)))))
 
-(defun m4-macro-exists (macro)
+(defun m4-macro (macro)
   (gethash macro *m4-lib*))
+
+(defmacro with-m4-lib (&body body)
+  `(let ((*m4-lib* (make-hash-table :test #'equal)))
+     (defm4macro "dnl" ()
+       (error 'macro-dnl-invocation-condition))
+     (defm4macro "define" (name result)
+       (setf (gethash name *m4-lib*)
+             #'(lambda (&rest macro-args)
+                 (declare (ignore macro-args))
+                   result))
+       "")
+     ,@body))
