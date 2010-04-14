@@ -16,13 +16,27 @@
 
 (in-package :evol)
 
+(defstruct (macro-token (:constructor make-macro-token (m4macro))
+                        (:print-function (lambda (&rest ignored)
+                                             (declare (ignore ignored))
+                                             "")))
+  m4macro)
+
 (define-condition macro-invocation-condition (error)
   ((result :initarg :result
            :reader macro-invocation-result)))
 
 (define-condition macro-dnl-invocation-condition (error) ())
 
+(define-condition macro-defn-invocation-condition (error)
+  ((macros :initarg :macros
+           :reader macro-defn-invocation-result)))
+
 (defparameter *m4-lib* (make-hash-table :test #'equal))
+(defvar *m4-quote-start*)
+(defvar *m4-quote-end*)
+(defvar *m4-comment*)
+(defvar *m4-macro-name*)
 
 (defmacro defm4macro (name args &body body)
   (let ((macro-args (gensym))
@@ -45,12 +59,33 @@
 
 (defm4macro "define" (name result)
   (setf (gethash name *m4-lib*)
-        #'(lambda (&rest macro-args)
-            (cl-ppcre:regex-replace-all "\\$(\\d+)" result
-                                        (replace-with-region
-                                         #'(lambda (match)
-                                             (or (nth (1- (parse-integer match)) macro-args) ""))))))
+        (if (macro-token-p result)
+            (macro-token-m4macro result)
+          #'(lambda (&rest macro-args)
+              (cl-ppcre:regex-replace-all "\\$(\\d+)" result
+                                          (replace-with-region
+                                           #'(lambda (match)
+                                               (or (nth (1- (parse-integer match)) macro-args) "")))))))
   "")
+
+(defm4macro "undefine" (&rest args)
+  (if (= 0 (list-length args)) ; "The macro undefine is recognized only with parameters"
+      "undefine"
+    (progn
+      (mapc #'(lambda (name)
+                (remhash name *m4-lib*))
+            args)
+      "")))
+
+(defm4macro "defn" (&rest args)
+  (if (= 0 (list-length args)) ; Figured out by trial-and-error
+      "defn"
+    (error 'macro-defn-invocation-condition
+           :macros (mapcar #'(lambda (name)
+                               (if (m4-macro name)
+                                   (make-macro-token (m4-macro name))
+                                 ""))
+                           args))))
 
 (defm4macro "ifdef" (name string-1 &optional (string-2 ""))
   (macro-return
@@ -73,10 +108,15 @@
              "")
             ((< num-args 5)
              (ifelse (car args) (cadr args) (caddr args) (or (cadddr args) "")))
-            ((= 5 num-args)
+            ((= 5 num-args)           ; If called with three or four arguments...A final fifth argument is ignored, after triggering a warning
              (warn "excess arguments to builtin `ifelse' ignored~%")
              (ifelse (car args) (cadr args) (caddr args) (cadddr args)))
             (t (apply #'ifelse (car args) (cadr args) (caddr args) (cdddr args)))))))
+
+(defm4macro "shift" (&rest args)
+  (if (= 0 (list-length args)) ; "The macro shift is recognized only with parameters"
+      "shift"
+    (macro-return (format nil (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}") (cdr args)))))
 
 (defun m4-macro (macro)
   (gethash macro *m4-lib*))
