@@ -59,6 +59,14 @@ macro_followed_string:         format(`%d',14):
 gnu_m4_man_4.4:                foo(() (`(') `(')
 define_foo:                    define(`foo',`bar')
 call_foo:                      foo(foo)
+defn_no_args:                  defn
+defn_empty_args:               defn()
+defn_user_wrong_context:       defn(`foo')
+defn_builtin_wrong_context:    defn(`format')
+defn_baz_for_foo:              define(`baz',defn(`foo'))
+call_baz:                      baz <- should be `bar'
+undefine_foo:                  undefine(`foo')
+call_undefined_foo:            foo
 ifdef_true:                    ifdef(`foo',`yes',`no')
 ifdef_false:                   ifdef(`bar',`yes',`no')
 ifelse_no_args:                ifelse
@@ -76,4 +84,9 @@ define_fun_variable_access:    define(`foo',`first var: [$1], second var: [$2]')
 variable_access_fun:           foo(`test1',`test2')
 variable_access_excessive_arg: foo(`test1',`test2',`test3')
 variable_access_missing_arg:   foo(`test1')
+shift_no_args:                 shift
+shift_one_arg:                 shift(`foo')
+shift_two_args:                shift(`foo',`bar')
+shift_three_args:              shift(`foo',`bar',`baz')
+shift_macro_call:              shift(`foo',`format(error)')
 dnl_at_end:                    dnl
