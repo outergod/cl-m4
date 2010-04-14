@@ -16,10 +16,7 @@
 
 (in-package :evol)
 
-(defstruct (macro-token (:constructor make-macro-token (m4macro))
-                        (:print-function (lambda (&rest ignored)
-                                             (declare (ignore ignored))
-                                             "")))
+(defstruct (macro-token (:constructor make-macro-token (m4macro)))
   m4macro)
 
 (define-condition macro-invocation-condition (error)
