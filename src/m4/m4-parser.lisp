@@ -20,7 +20,7 @@
   (labels ((acc (rec string rest)
                 (let ((char (car rest)))
                   (cond ((null char) (nreverse (cons string rec)))
-                        ((not (stringp char))
+                        ((not (stringp char)) ; macro-token
                          (acc (cons char rec) "" (cdr rest)))
                         ((string= split-string (car rest))
                          (acc (cons string rec) "" (cdr rest)))
@@ -147,15 +147,15 @@
              (multiple-value-bind (class image)
                  (funcall lexer)
                (cond ((null class)
-;                      (format t "~{[~s]~}" (reverse rec))
-                      (format nil "~{~a~}" (nreverse rec)))
-;                      (apply #'concatenate 'string (nreverse rec)))
+                     (apply #'concatenate 'string (nreverse rec)))
                      ((equal :quote-start class)
                       (m4 (cons (parse-m4-quote lexer) rec)))
                      ((equal :comment class)
                       (m4 (cons (parse-m4-comment lexer image) rec)))
                      ((equal :macro-name class)
                       (m4 (cons (parse-m4-macro lexer image) rec)))
+                     ((equal :macro-token class)
+                      (m4 (cons "" rec)))
                      (t (m4 (cons image rec)))))))
     (m4 (list))))
 
