@@ -51,6 +51,13 @@
 (defun macro-return (result)
   (error 'macro-invocation-condition :result result))
 
+(defun m4-macro (macro)
+  (gethash macro *m4-lib*))
+
+(defmacro with-m4-lib (&body body)
+  `(let ((*m4-lib* (alexandria:copy-hash-table *m4-lib*)))
+     ,@body))
+
 (defm4macro "dnl" ()
   (error 'macro-dnl-invocation-condition))
 
@@ -114,10 +121,3 @@
   (if (= 0 (list-length args)) ; "The macro shift is recognized only with parameters"
       "shift"
     (macro-return (format nil (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}") (cdr args)))))
-
-(defun m4-macro (macro)
-  (gethash macro *m4-lib*))
-
-(defmacro with-m4-lib (&body body)
-  `(let ((*m4-lib* (alexandria:copy-hash-table *m4-lib*)))
-     ,@body))
