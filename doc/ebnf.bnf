@@ -1,0 +1,52 @@
+EBNF = {production}+.
+
+production = non_terminal "=" body ".".   ;; production
+
+body = {sequence || "|"}*.                ;; alternative
+
+sequence = {exception}*.                  ;; sequence
+
+exception = repeat [ "-" repeat].         ;; exception
+
+repeat = [ integer "*" [ integer ]] term. ;; repetition
+
+term = factor
+     | [factor] "+"                       ;; one-or-more
+     | [factor] "/" [factor]              ;; one-or-more
+     .
+
+factor = [ "$" ] "\"" terminal "\""       ;; terminal
+       | [ "$" ] non_terminal             ;; non-terminal
+       | [ "$" ] "?" special "?"          ;; special
+       | "(" body ")"                     ;; group
+       | "[" body "]"                     ;; zero-or-one
+       | "{" body [ "||" body ] "}+"      ;; one-or-more
+       | "{" body [ "||" body ] "}*"      ;; zero-or-more
+       | "{" body [ "||" body ] "}"       ;; zero-or-more
+       .
+
+non_terminal = "[!#%&'*-,0-:<>@-Z\\\\^-z~\\240-\\377]+".
+;; that is, a valid non_terminal accepts decimal digits, letters (upper
+;; and lower), 8-bit accentuated characters,
+;; "!", "#", "%", "&", "'", "*", "+", ",", ":",
+;; "<", ">", "@", "\", "^", "_", "`" and "~".
+
+terminal = "\\([^\"\\]\\|\\\\[ -~\\240-\\377]\\)+".
+;; that is, a valid terminal accepts any printable character (including
+;; 8-bit accentuated characters) except `"', as `"' is used to delimit a
+;; terminal.  Also, accepts escaped characters, that is, a character
+;; pair starting with `\' followed by a printable character, for
+;; example: \", \\. 
+
+special = "[^?\\000-\\010\\012-\\037\\177-\\237]*".
+;; that is, a valid special accepts any printable character (including
+;; 8-bit accentuated characters) and tabs except `?', as `?' is used to
+;; delimit a special.
+
+integer = "[0-9]+".
+;; that is, an integer is a sequence of one or more decimal digits.
+
+comment = ";" "[^\\n\\000-\\010\\016-\\037\\177-\\237]*" "\\n".
+;; that is, a comment starts with the character `;' and terminates at end
+;; of line.  Also, it only accepts printable characters (including 8-bit
+;; accentuated characters) and tabs.

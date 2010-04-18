@@ -1,0 +1,47 @@
+;;;; evol - m4.bnf
+;;;; Copyright (C) 2010  Alexander Kahl <e-user@fsfe.org>
+;;;; This file is part of evol.
+;;;; evol is free software; you can redistribute it and/or modify
+;;;; it under the terms of the GNU General Public License as published by
+;;;; the Free Software Foundation; either version 3 of the License, or
+;;;; (at your option) any later version.
+;;;;
+;;;; evol is distributed in the hope that it will be useful,
+;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;; GNU General Public License for more details.
+;;;;
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+M4 = {token}.
+
+TOKEN = MACRO_INVOCATION 
+      | QUOTED_STRING
+      | COMMENT
+      | (open_paren | close_paren | quote_end | newline | token)
+      .
+
+COMMENT = comment {open_paren | close_paren | quote_start | quote_end | macro_name | comment} newline.
+
+QUOTED_STRING = quote_start {comment | macro_name | open_paren | close_paren | newline | QUOTED_STRING} quote_end.
+
+MACRO_INVOCATION = macro_name [open_paren MACRO_ARGUMENTS].
+
+MACRO_ARGUMENTS = {(open_paren MACRO_ARGUMENTS) | MACRO_INVOCATION | QUOTED_STRING | COMMENT | newline | token | quote_end} close_paren.
+
+quote_start = "`".
+
+quote_end = "'".
+
+comment = "#".
+
+name = "[_a-zA-Z]\\w*".
+
+newline = "\\n".
+
+open_paren = "\(".
+
+close_paren = "\)".
+
+token = "[^\\n()`'#]".
