@@ -36,10 +36,6 @@
           (acc (list) "" string-list)))
 
 (defvar *m4-quoting-level*)
-(defvar *m4-string*)
-(defvar *m4-macro-queue*)
-(defvar *m4-parsing-row*)
-(defvar *m4-parsing-column*)
                   
 (defun call-m4-macro (macro args)
   (let ((macrofun (m4-macro macro)))
@@ -52,34 +48,6 @@
                       (funcall macrofun)))
           (args (format nil "~a(~{~a~})" macro args))
           (t macro))))
-
-(defun m4-lexer (&optional (peek nil))
-  (labels ((dynamic-scan (rules)
-             (apply #'values
-                    (some #'(lambda (pair)
-                              (let ((match (cl-ppcre:scan-to-strings (concatenate 'string "^" (car pair)) *m4-string*)))
-                                (when match
-                                  (list (cdr pair) match (length match)))))
-                          rules))))
-    (if *m4-macro-queue*
-        (values :macro-token (pop *m4-macro-queue*))
-      (multiple-value-bind (class image remainder)
-          (dynamic-scan `((,*m4-quote-start* . :quote-start)
-                          (,*m4-quote-end* . :quote-end)
-                          (,*m4-comment* . :comment)
-                          (,*m4-macro-name* . :macro-name)
-                          ("\\n" . :newline)
-                          ("\\(" . :open-paren)
-                          ("\\)" . :close-paren)
-                          ("." :token)))
-        (when (and remainder (null peek))
-          (if (equal :newline class)
-              (progn
-                (setq *m4-parsing-column* 0)
-                (incf *m4-parsing-row*))
-            (incf *m4-parsing-column* remainder))
-          (setq *m4-string* (subseq *m4-string* remainder)))
-        (values class image)))))
 
 (defun parse-m4-comment (lexer image)
   (labels ((m4-comment (rec)
