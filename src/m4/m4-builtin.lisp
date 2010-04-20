@@ -16,8 +16,8 @@
 
 (in-package :evol)
 
-(defstruct (macro-token (:constructor make-macro-token (m4macro)))
-  m4macro)
+(defstruct (macro-token (:constructor make-macro-token (m4macro name)))
+  m4macro name)
 
 (define-condition macro-invocation-condition (error)
   ((result :initarg :result
@@ -30,6 +30,7 @@
            :reader macro-defn-invocation-result)))
 
 (defparameter *m4-lib* (make-hash-table :test #'equal))
+(defvar *m4-runtime-lib*)
 (defvar *m4-quote-start*)
 (defvar *m4-quote-end*)
 (defvar *m4-comment*)
@@ -52,17 +53,17 @@
   (error 'macro-invocation-condition :result result))
 
 (defun m4-macro (macro)
-  (gethash macro *m4-lib*))
+  (gethash macro *m4-runtime-lib*))
 
 (defmacro with-m4-lib (&body body)
-  `(let ((*m4-lib* (alexandria:copy-hash-table *m4-lib*)))
+  `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib*)))
      ,@body))
 
 (defm4macro "dnl" ()
   (error 'macro-dnl-invocation-condition))
 
 (defm4macro "define" (name result)
-  (setf (gethash name *m4-lib*)
+  (setf (gethash name *m4-runtime-lib*)
         (if (macro-token-p result)
             (macro-token-m4macro result)
           #'(lambda (&rest macro-args)
@@ -87,7 +88,10 @@
     (error 'macro-defn-invocation-condition
            :macros (mapcar #'(lambda (name)
                                (if (m4-macro name)
-                                   (make-macro-token (m4-macro name))
+                                   (make-macro-token (m4-macro name)
+                                                     (if (gethash name *m4-lib*)
+                                                         ""
+                                                       name))
                                  ""))
                            args))))
 

@@ -30,25 +30,42 @@
 (defmethod close ((stream buffered-input-stream) &key abort)
   (close (buffered-stream stream) :abort abort))
 
+(defgeneric flush-buffer (buffered-input-stream)
+  (:method ((stream buffered-input-stream))
+    (prog1 (subseq (buffered-input-buffer stream) (buffered-input-position stream))
+      (fill-buffer stream))))
+
 (defmethod initialize-instance :after ((stream buffered-input-stream)  &rest initargs)
   (declare (ignore initargs))
   (with-accessors ((size buffered-input-size))
       stream
     (setf (buffered-input-buffer stream)
           (make-array (buffered-input-size stream)
-                      :element-type 'character :adjustable nil :fill-pointer size)
-          (buffered-input-position stream) size)))
+                      :element-type 'character :adjustable nil :fill-pointer size))
+    (fill-buffer stream)))
+
+(defgeneric fill-buffer (buffered-input-stream)
+  (:method ((stream buffered-input-stream))
+    (with-accessors ((buffer buffered-input-buffer))
+        stream
+      (setf (fill-pointer buffer) (read-sequence buffer (buffered-stream stream))
+            (buffered-input-position stream) 0))))
+
+(defmethod trivial-gray-streams:stream-read-char :before ((stream buffered-input-stream))
+  (with-accessors ((buffer buffered-input-buffer)
+                   (position buffered-input-position))
+      stream
+    (when (>= position (fill-pointer buffer))
+      (fill-buffer stream))))
 
 (defmethod trivial-gray-streams:stream-read-char ((stream buffered-input-stream))
   (with-accessors ((buffer buffered-input-buffer)
                    (position buffered-input-position))
       stream
-    (when (= position (fill-pointer buffer))
-      (setf (fill-pointer buffer) (read-sequence buffer (buffered-stream stream))
-            (buffered-input-position stream) -1))
     (if (= 0 (fill-pointer buffer))
         :eof
-      (char buffer (incf position)))))
+      (prog1 (char buffer position)
+        (incf position)))))
 
 (defmethod trivial-gray-streams:stream-unread-char ((stream buffered-input-stream) char)
   (error "Unreading chars is not supported for buffered-input-streams"))
@@ -64,66 +81,77 @@
    (row   :accessor lexer-row
           :initform 1)
    (column :accessor lexer-column
-           :initform 0)))
+           :initform 0)
+   (non-stream-position :accessor lexer-non-stream-position
+                        :initform 0)
+   (double-buffer :accessor lexer-double-buffer
+                  :initform "")))
 
-(defmethod trivial-gray-streams:stream-read-char ((stream lexer-input-stream))
-  (let ((char (call-next-method)))
-    (if (equal #\newline char)
-        (progn
-          (setf (lexer-column stream) 0)
-          (incf (lexer-row stream)))
-      (incf (lexer-column stream)))
-    char))
+(defgeneric lexer-unread-sequence (lexer-input-stream seq)
+  (:method ((stream lexer-input-stream) seq)
+    (with-accessors ((double-buffer lexer-double-buffer)
+                     (position lexer-non-stream-position))
+        stream
+      (setq double-buffer (concatenate 'string seq double-buffer))
+      (incf position (length seq)))))
+
+(defmethod flush-buffer ((stream lexer-input-stream))
+  (with-accessors ((double-buffer lexer-double-buffer))
+      stream
+    (let ((buffer-contents (call-next-method)))
+      (setq double-buffer (concatenate 'string double-buffer buffer-contents))
+      buffer-contents)))
 
 (defgeneric stream-read-token (lexer-input-stream &optional peek)
-  (:method ((lexer lexer-input-stream) &optional (peek nil))
-    (labels ((dynamic-scan (rules)
-               (apply #'values
-                      (some #'(lambda (pair)
-                                (let ((match (cl-ppcre:scan-to-strings (concatenate 'string "^" (car pair))
-                                                                       (buffered-input-buffer stream))))
-                                  (when match
-                      (list (cdr pair) match (length match)))))
-                            (lexer-rules stream)))))
-      (multiple-value-bind (class image remainder)
-          (when (and remainder (null peek))
-            (if (equal :newline class)
-                (progn
-                  (setf (lexer-column stream) 0)
-                  (incf (lexer-row stream)))
-              (incf (lexer-column stream) remainder))
-            (incf (buffered-input-buffer stream) remainder))
-        (values class image)))))
+  (:method :before ((stream lexer-input-stream) &optional (peek nil))
+    (declare (ignore peek))
+    (when (= 0 (length (lexer-double-buffer stream)))
+      (flush-buffer stream)))
+  (:method :around ((stream lexer-input-stream) &optional (peek nil))
+    (with-accessors ((double-buffer lexer-double-buffer)
+                     (position lexer-non-stream-position))
+        stream
+      (multiple-value-bind (class image)
+          (call-next-method)
+        (when (and class (null peek))
+          (let ((length (length image)))
+            (setq double-buffer (subseq double-buffer length))
+            (if (>= position length)
+                (decf position length)
+              (if (equal :newline class)
+                  (progn
+                    (setf (lexer-column stream) 0)
+                    (incf (lexer-row stream)))
+                (incf (lexer-column stream) (- length position))))))
+        (values class image))))
+  (:method ((stream lexer-input-stream) &optional (peek nil))
+    (declare (ignore peek))
+    (with-accessors ((double-buffer lexer-double-buffer))
+        stream
+      (labels ((scan (chunk rules)
+                 (some #'(lambda (pair)
+                           (let ((match (cl-ppcre:scan-to-strings (concatenate 'string "^" (car pair)) double-buffer)))
+                             (when match
+                               (if (= (length match) (length chunk))
+                                   (scan (flush-buffer stream) (list pair))
+                                 (list (cdr pair) match)))))
+                       rules)))
+        (apply #'values (scan double-buffer (lexer-rules stream)))))))
 
-(defvar *m4-string*)
-(defvar *m4-macro-queue*)
-(defvar *m4-parsing-row*)
-(defvar *m4-parsing-column*)
+(defclass m4-input-stream (lexer-input-stream)
+  ((macro-stack :accessor m4-macro-stack
+                :initform nil)))
 
-(defun m4-lexer (&optional (peek nil))
-  (labels ((dynamic-scan (rules)
-             (apply #'values
-                    (some #'(lambda (pair)
-                              (let ((match (cl-ppcre:scan-to-strings (concatenate 'string "^" (car pair)) *m4-string*)))
-                                (when match
-                                  (list (cdr pair) match (length match)))))
-                          rules))))
-    (if *m4-macro-queue*
-        (values :macro-token (pop *m4-macro-queue*))
-      (multiple-value-bind (class image remainder)
-          (dynamic-scan `((,*m4-quote-start* . :quote-start)
-                          (,*m4-quote-end* . :quote-end)
-                          (,*m4-comment* . :comment)
-                          (,*m4-macro-name* . :macro-name)
-                          ("\\n" . :newline)
-                          ("\\(" . :open-paren)
-                          ("\\)" . :close-paren)
-                          ("." :token)))
-        (when (and remainder (null peek))
-          (if (equal :newline class)
-              (progn
-                (setq *m4-parsing-column* 0)
-                (incf *m4-parsing-row*))
-            (incf *m4-parsing-column* remainder))
-          (setq *m4-string* (subseq *m4-string* remainder)))
-        (values class image)))))
+(defgeneric m4-push-macro (m4-input-stream macro)
+  (:method ((stream m4-input-stream) macro)
+    (setf (m4-macro-stack stream) macro)))
+
+(defgeneric m4-pop-macro (m4-input-stream)
+  (:method ((stream m4-input-stream))
+    (pop (m4-macro-stack stream))))
+
+(defmethod stream-read-token :around ((stream m4-input-stream) &optional (peek nil))
+  (declare (ignore peek))
+  (if (m4-macro-stack stream)
+      (values :macro-token (m4-pop-macro stream))
+    (call-next-method)))
