@@ -1,35 +1,53 @@
-dnl_with_args:                 dnl(foo)
-(blank_line)
+dnl_with_args:                 dnl(foo) 
+<- should be empty plus warning
+
 dnl_with_empty_args:           dnl()
-(blank_line)
+<- should be empty plus warning
+
 dnl_quote_start:               dnl`0
-(blank_line)
-dnl_underscore:                dnl_foo 1
-(blank_line)
-dnl_number:                    dnl4 2
-(blank_line)
+<- should be empty and same `line'
+dnl_underscore:                dnl_foo 1 <- should be `dnl_foo 1'
+
+dnl_number:                    dnl4 2 <- should be `dnl4 2'
+
 dnl_quote_end:                 dnl'foo 3
-(blank_line)
+<- should be empty and same `line'
+
 dnl_comment:                   dnl#foo 4
-(blank_line)
+<- should be empty and same `line'
+
 dnl_quotes:                    dnl`foo' 5
-(blank_line)
-dnl_word:                      dnlfoo? 6
-(blank_line)
-name_comment_space:            abc # def
-name_dnl_space:                abc dnl def
-(blank_line)
+<- should be empty and same `line'
+
+dnl_word:                      dnlfoo? 6 <- should be `dnlfoo? 6'
+
+name_comment_space:            abc # def 
+<- should be `abc # def' and previous line
+
+name_dnl_space:                abc dnl def 
+<- should be `abc' and same `line'
+
 name_comment_nospace:          abc#def
-name_cnl_nospace:              abcdnldef
-(blank_line)
-name_dnl_newline:              abcdnl
-(blank_line)
-quoted_string:                 `abc'
+<- should be `abc#def' and previous line
+
+name_cnl_nospace:              abcdnldef <- should be `abcdnldef'
+
+name_dnl_newline:              abcdnl <- should be `abcdnl'
+
+quoted_string:                 `abc' <- should be `abc'
+
 dnl_quoted_string_space:       dnl `abc'
-(blank_line)
-comment_quoted_string:         # `abc'
-comment_name:                  #abc
+<- should be empty and same `line'
+
+comment_quoted_string:         # `abc' 
+<- should be `# `abc'' and previous line
+
+comment_name:                  #abc 
+<- should be `#abc' and previous line
+
 comment_quoted_string_nospace: #`abc'
+<- should be `#`abc'' and previous `line'
+
 macro_call:                    format(`%d',14)
 macro_call_emptyargs:          format()
 macro_call_spaces:             format(`%d ?' ?   ?, 14 5)
@@ -80,7 +98,7 @@ ifelse_five_args:              ifelse(`foo',`foo',`yes',`no',`error')
 ifelse_six_args_first_true:    ifelse(`foo',`foo',`yes1',`bar',`bar',`yes2')
 ifelse_six_args_second_true:   ifelse(`foo',`fail',`yes1',`bar',`bar',`yes2')
 ifelse_seven_args_none_true:   ifelse(`foo',`fail',`error',`bar',`fail',`error',`yes')
-define_fun_variable_access:    define(`foo',`first var: [$1], second var: [$2]')
+define_fun_variable_access:    define(`foo',`name: [`$0'], first var: [$1], second var: [$2]')
 variable_access_fun:           foo(`test1',`test2')
 variable_access_excessive_arg: foo(`test1',`test2',`test3')
 variable_access_missing_arg:   foo(`test1')
