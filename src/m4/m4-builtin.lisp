@@ -67,10 +67,14 @@
         (if (macro-token-p result)
             (macro-token-m4macro result)
           #'(lambda (&rest macro-args)
-              (cl-ppcre:regex-replace-all "\\$(\\d+)" result
-                                          (replace-with-region
-                                           #'(lambda (match)
-                                               (or (nth (1- (parse-integer match)) macro-args) "")))))))
+              (macro-return
+               (cl-ppcre:regex-replace-all "\\$(\\d+)" result
+                                           (replace-with-region
+                                            #'(lambda (match)
+                                                (let ((num (parse-integer match)))
+                                                  (if (= 0 num)
+                                                      name
+                                                    (or (nth (1- num) macro-args) ""))))))))))
   "")
 
 (defm4macro "undefine" (&rest args)
