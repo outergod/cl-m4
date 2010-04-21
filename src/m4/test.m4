@@ -1,53 +1,3 @@
-dnl_with_args:                 dnl(foo) 
-<- should be empty plus warning
-
-dnl_with_empty_args:           dnl()
-<- should be empty plus warning
-
-dnl_quote_start:               dnl`0
-<- should be empty and same `line'
-dnl_underscore:                dnl_foo 1 <- should be `dnl_foo 1'
-
-dnl_number:                    dnl4 2 <- should be `dnl4 2'
-
-dnl_quote_end:                 dnl'foo 3
-<- should be empty and same `line'
-
-dnl_comment:                   dnl#foo 4
-<- should be empty and same `line'
-
-dnl_quotes:                    dnl`foo' 5
-<- should be empty and same `line'
-
-dnl_word:                      dnlfoo? 6 <- should be `dnlfoo? 6'
-
-name_comment_space:            abc # def 
-<- should be `abc # def' and previous line
-
-name_dnl_space:                abc dnl def 
-<- should be `abc' and same `line'
-
-name_comment_nospace:          abc#def
-<- should be `abc#def' and previous line
-
-name_cnl_nospace:              abcdnldef <- should be `abcdnldef'
-
-name_dnl_newline:              abcdnl <- should be `abcdnl'
-
-quoted_string:                 `abc' <- should be `abc'
-
-dnl_quoted_string_space:       dnl `abc'
-<- should be empty and same `line'
-
-comment_quoted_string:         # `abc' 
-<- should be `# `abc'' and previous line
-
-comment_name:                  #abc 
-<- should be `#abc' and previous line
-
-comment_quoted_string_nospace: #`abc'
-<- should be `#`abc'' and previous `line'
-
 macro_call:                    format(`%d',14)
 macro_call_emptyargs:          format()
 macro_call_spaces:             format(`%d ?' ?   ?, 14 5)
@@ -56,19 +6,6 @@ macro_call_comment_newline:    format(# %d %d?
 ,14,18)
 comment_macro_call:            # format(`%d',14)
 quoted_macro_call:             `format(`%d',14)'
-quoted_dnl:                    `dnl foo'
-quoted_comment:                `# foo'
-double_quote:                  ``foo''
-multi_quote_newline:           ``foo'
-test
-``foo'''
-(multi_quote_end)
-triple_quote:                  ```foo'''
-single_quote_newline:
-`foo
-bar'
-single_quote_newline_end
-cascaded_quote:                ``foo'bar`baz''
 number_followed_macro_name:    4format(`%d',14)
 number_followed_dnl:           4dnl foo
 (blank_line)
@@ -107,4 +44,3 @@ shift_one_arg:                 shift(`foo')
 shift_two_args:                shift(`foo',`bar')
 shift_three_args:              shift(`foo',`bar',`baz')
 shift_macro_call:              shift(`foo',`format(error)')
-dnl_at_end:                    dnl
