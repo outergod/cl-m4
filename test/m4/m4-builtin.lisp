@@ -17,7 +17,7 @@
 (in-package :evol)
 
 (shadowing-import
- '(m4-macro with-m4-lib macro-dnl-invocation-condition macro-defn-invocation-condition)
+ '(macro-dnl-invocation-condition macro-defn-invocation-condition)
  (find-package :evol-test))
 
 (in-package :evol-test)
