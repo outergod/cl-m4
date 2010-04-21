@@ -82,7 +82,7 @@
       "undefine"
     (progn
       (mapc #'(lambda (name)
-                (remhash name *m4-lib*))
+                (remhash name *m4-runtime-lib*))
             args)
       "")))
 
