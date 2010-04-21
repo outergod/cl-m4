@@ -138,6 +138,7 @@
                        rules)))
         (apply #'values (scan double-buffer (lexer-rules stream)))))))
 
+
 (defclass m4-input-stream (lexer-input-stream)
   ((macro-stack :accessor m4-macro-stack
                 :initform nil)))
