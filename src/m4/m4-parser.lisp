@@ -36,16 +36,13 @@
           (acc (list) "" string-list)))
 
 (defun call-m4-macro (macro args)
-  (let ((macrofun (m4-macro macro)))
-    (cond (macrofun (if args
-                        (apply macrofun (mapcar #'(lambda (string)
-                                                    (if (stringp string)
-                                                        (string-left-trim " " string)
-                                                      string)) ; macro-token
-                                                (split-merge args ",")))
-                      (funcall macrofun)))
-          (args (format nil "~a(~{~a~})" macro args))
-          (t macro))))
+  (if (not args)
+      (funcall macro)
+    (apply macro (mapcar #'(lambda (string)
+                             (if (stringp string)
+                                 (string-left-trim " " string)
+                               string)) ; macro-token
+                         (split-merge args ",")))))
 
 (defun parse-m4-comment (lexer image)
   (labels ((m4-comment (rec)
@@ -105,23 +102,26 @@
            (null class)) "")))
 
 (defun parse-m4-macro (lexer macro-name)
-  (handler-case
-   (multiple-value-bind (class image)
-       (stream-read-token lexer t)
-     (declare (ignore image))
-     (if (equal :open-paren class)
-         (progn
-           (stream-read-token lexer) ; consume token
-           (call-m4-macro macro-name (parse-m4-macro-arguments lexer)))
-       (call-m4-macro macro-name nil)))
-   (macro-dnl-invocation-condition ()
-     (parse-m4-dnl lexer))
-   (macro-defn-invocation-condition (condition)
-     (m4-push-macro lexer (macro-defn-invocation-result condition))
-     "")
-   (macro-invocation-condition (condition)
-     (lexer-unread-sequence lexer (macro-invocation-result condition))
-     "")))
+  (let ((macro (m4-macro macro-name)))
+    (if (not macro)
+        macro-name
+      (handler-case
+       (multiple-value-bind (class image)
+           (stream-read-token lexer t)
+         (declare (ignore image))
+         (if (equal :open-paren class)
+             (progn
+               (stream-read-token lexer) ; consume token
+               (call-m4-macro macro (parse-m4-macro-arguments lexer)))
+           (call-m4-macro macro nil)))
+       (macro-dnl-invocation-condition ()
+         (parse-m4-dnl lexer))
+       (macro-defn-invocation-condition (condition)
+         (m4-push-macro lexer (macro-defn-invocation-result condition))
+         "")
+       (macro-invocation-condition (condition)
+         (lexer-unread-sequence lexer (macro-invocation-result condition))
+         "")))))
 
 (defun parse-m4 (lexer)
   (labels ((m4 (rec)
