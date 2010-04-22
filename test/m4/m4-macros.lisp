@@ -91,6 +91,28 @@ oops
 m4))
 
 
+; depends: define, $\*, $\@
+(deftest composite-echo ()
+  (m4-test
+#>m4>
+define(`echo', `$*')
+define(`arg1', `correct')
+echo(`arg1',    arg2, arg3 , arg4)
+define(`echo', `$@')
+define(`arg1', `error')
+echo(`arg1',    arg2, arg3 , arg4)
+m4
+
+#>m4>
+
+
+correct,arg2,arg3 ,arg4
+
+
+arg1,arg2,arg3 ,arg4
+m4))
+
+
 ; "For example, if foo is a macro,
 ;     foo(() (`(') `(')
 ; is a macro call, with one argument, whose value is ‘() (() (’"
