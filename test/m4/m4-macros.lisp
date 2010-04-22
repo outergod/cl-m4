@@ -18,9 +18,83 @@
 
 (in-suite m4)
 
+
+; depends: define, defn, format
+;; (deftest composite-array ()
+;;   (m4-test
+;; #>m4>
+
+;; m4
+
+;; #>m4>
+
+;; m4))
+
+
+; depends: define, $\d
+(deftest composite-exch ()
+  (m4-test
+#>m4>
+define(`exch', `$2, $1')
+exch(`arg1', `arg2')
+define(exch(``expansion text'', ``macro''))
+macro
+m4
+
+#>m4>
+
+arg2, arg1
+
+expansion text
+m4))
+
+
+; depends: define, $#
+(deftest composite-nargs ()
+  (m4-test
+#>m4>
+define(`nargs', `$#')
+nargs
+nargs()
+nargs(`arg1', `arg2', `arg3')
+nargs(`commas can be quoted, like this')
+nargs(arg1#inside comments, commas do not separate arguments
+                       still arg1)
+nargs((unquoted parentheses, like this, group arguments))
+nargs(`('quoted parentheses, like this, don't group arguments`)')
+m4
+
+#>m4>
+
+0
+1
+3
+1
+1
+1
+3
+m4))
+
+
+(deftest composite-nargs-underquoted ()
+  (m4-test
+#>m4>
+define(underquoted, $#)
+oops)
+underquoted
+m4
+
+#>m4>
+
+0)
+oops
+m4))
+
+
 ; "For example, if foo is a macro,
 ;     foo(() (`(') `(')
 ; is a macro call, with one argument, whose value is ‘() (() (’"
+; depends: define, $\d
 (deftest gnu-m4-4.4-1 ()
   (m4-test
 #>m4>
@@ -36,6 +110,7 @@ m4
 m4))
 
 
+; depends: define, $\d
 (deftest gnu-m4-4.4-2 ()
   (m4-test
 #>m4>
@@ -55,7 +130,9 @@ active active
 m4))
 
 
-; "Undefining a macro inside that macro's expansion is safe; the macro still expands to the definition that was in effect at the ‘(’"
+; "Undefining a macro inside that macro's expansion is safe; the macro still
+; expands to the definition that was in effect at the ‘(’"
+; depends: define, undefine, $\d
 (deftest gnu-m4-5.4 ()
   (m4-test
 #>m4>
@@ -67,3 +144,5 @@ f(`bye')m4
 
 f:f:f:hello world
 f(bye)m4))
+
+
