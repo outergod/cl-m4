@@ -63,21 +63,27 @@
   (error 'macro-dnl-invocation-condition))
 
 (defm4macro "define" (name result)
-  (setf (gethash name *m4-runtime-lib*)
-        (if (macro-token-p result)
-            (macro-token-m4macro result)
-          #'(lambda (&rest macro-args)
-              (macro-return
-               (cl-ppcre:regex-replace-all "\\$(\\d+|#)" result
-                                           (replace-with-region
-                                            #'(lambda (match)
-                                                (if (string= "#" match)
-                                                    (write-to-string (length macro-args))
-                                                  (let ((num (parse-integer match)))
-                                                    (if (= 0 num)
-                                                        name
-                                                      (or (nth (1- num) macro-args) "")))))))))))
-  "")
+  (prog1 ""
+    (setf (gethash name *m4-runtime-lib*)
+          (if (macro-token-p result)
+              (macro-token-m4macro result)
+            #'(lambda (&rest macro-args)
+                (macro-return
+                 (cl-ppcre:regex-replace-all "\\$(\\d+|#|\\*|@)" result
+                                             (replace-with-region
+                                              #'(lambda (match)
+                                                  (cond ((string= "#" match)
+                                                         (write-to-string (length macro-args)))
+                                                        ((string= "*" match)
+                                                         (format nil "~{~a~^,~}" macro-args))
+                                                        ((string= "@" match)
+                                                         (format nil
+                                                                 (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}")
+                                                                 macro-args))
+                                                        (t (let ((num (parse-integer match)))
+                                                             (if (= 0 num)
+                                                                 name
+                                                              (or (nth (1- num) macro-args) ""))))))))))))))
 
 (defm4macro "undefine" (&rest args)
   (if (= 0 (list-length args)) ; "The macro undefine is recognized only with parameters"
