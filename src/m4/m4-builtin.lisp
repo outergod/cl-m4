@@ -36,24 +36,66 @@
 (defvar *m4-comment*)
 (defvar *m4-macro-name*)
 
+(defun pushm4macro (name fun &optional (replace t))
+  (unless (gethash name *m4-runtime-lib*)
+    (setf (gethash name *m4-runtime-lib*)
+          (make-array 1 :adjustable t :fill-pointer 1)))
+  (let ((stack (gethash name *m4-runtime-lib*)))
+    (if replace
+        (setf (aref stack (1- (fill-pointer stack))) fun)
+      (vector-push-extend fun stack))))
+
+(defun popm4macro (name)
+  (let ((stack (gethash name *m4-runtime-lib*)))
+    (when stack
+      (if (> (fill-pointer stack) 1)
+          (vector-pop stack)
+        (remhash name *m4-runtime-lib*)))))
+
 (defmacro defm4macro (name args &body body)
   (let ((macro-args (gensym))
         (ignored-rest (gensym)))
     `(setf (gethash ,name *m4-lib*)
-           #'(lambda (&rest ,macro-args)
-               ,(if (member '&rest args)
-                    `(destructuring-bind ,args ,macro-args
-                       ,@body)
-                 `(destructuring-bind (,@args &rest ,ignored-rest) ,macro-args
-                    (when ,ignored-rest
-                      (warn (format nil "excess arguments to builtin `~a' ignored~%" ,name)))
-                    ,@body))))))
+           (make-array 1 :adjustable t :fill-pointer 1
+                         :initial-contents
+                         (list #'(lambda (&rest ,macro-args)
+                                   ,(if (member '&rest args)
+                                        `(destructuring-bind ,args ,macro-args
+                                           ,@body)
+                                      `(destructuring-bind (,@args &rest ,ignored-rest) ,macro-args
+                                         (when ,ignored-rest
+                                           (warn (format nil "excess arguments to builtin `~a' ignored~%" ,name)))
+                                         ,@body))))))))
+
+(defun defm4runtimemacro (name expansion &optional (replace t))
+  (let ((fun (if (macro-token-p expansion)
+                 (macro-token-m4macro expansion)
+               #'(lambda (&rest macro-args)
+                   (macro-return
+                    (cl-ppcre:regex-replace-all "\\$(\\d+|#|\\*|@)" expansion
+                                                (replace-with-region
+                                                 #'(lambda (match)
+                                                     (cond ((string= "#" match)
+                                                            (write-to-string (length macro-args)))
+                                                           ((string= "*" match)
+                                                            (format nil "~{~a~^,~}" macro-args))
+                                                           ((string= "@" match)
+                                                            (format nil
+                                                                    (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}")
+                                                                    macro-args))
+                                                           (t (let ((num (parse-integer match)))
+                                                                (if (= 0 num)
+                                                                    name
+                                                                  (or (nth (1- num) macro-args) "")))))))))))))
+    (pushm4macro name fun replace)))
 
 (defun macro-return (result)
   (error 'macro-invocation-condition :result result))
 
 (defun m4-macro (macro)
-  (gethash macro *m4-runtime-lib*))
+  (let ((stack (gethash macro *m4-runtime-lib*)))
+    (when stack
+      (aref stack (1- (fill-pointer stack))))))
 
 (defmacro with-m4-lib (&body body)
   `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib*)))
@@ -62,28 +104,8 @@
 (defm4macro "dnl" ()
   (error 'macro-dnl-invocation-condition))
 
-(defm4macro "define" (name result)
-  (prog1 ""
-    (setf (gethash name *m4-runtime-lib*)
-          (if (macro-token-p result)
-              (macro-token-m4macro result)
-            #'(lambda (&rest macro-args)
-                (macro-return
-                 (cl-ppcre:regex-replace-all "\\$(\\d+|#|\\*|@)" result
-                                             (replace-with-region
-                                              #'(lambda (match)
-                                                  (cond ((string= "#" match)
-                                                         (write-to-string (length macro-args)))
-                                                        ((string= "*" match)
-                                                         (format nil "~{~a~^,~}" macro-args))
-                                                        ((string= "@" match)
-                                                         (format nil
-                                                                 (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}")
-                                                                 macro-args))
-                                                        (t (let ((num (parse-integer match)))
-                                                             (if (= 0 num)
-                                                                 name
-                                                              (or (nth (1- num) macro-args) ""))))))))))))))
+(defm4macro "define" (name &optional (expansion ""))
+  (prog1 "" (defm4runtimemacro name expansion)))
 
 (defm4macro "undefine" (&rest args)
   (if (= 0 (list-length args)) ; "The macro undefine is recognized only with parameters"
@@ -137,3 +159,13 @@
   (if (= 0 (list-length args)) ; "The macro shift is recognized only with parameters"
       "shift"
     (macro-return (format nil (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}") (cdr args)))))
+
+(defm4macro "pushdef" (name &optional (expansion ""))
+  (prog1 "" ; "The expansion of both pushdef and popdef is void"
+    (defm4runtimemacro name expansion nil)))
+
+(defm4macro "popdef" (&rest args)
+  (if (= 0 (list-length args)) ; "The macros pushdef and popdef are recognized only with parameters"
+      "popdef"
+    (prog1 "" ; "The expansion of both pushdef and popdef is void"
+      (mapc #'popm4macro args))))
