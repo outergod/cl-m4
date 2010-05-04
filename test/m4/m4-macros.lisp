@@ -155,6 +155,7 @@ m4))
 ; "Undefining a macro inside that macro's expansion is safe; the macro still
 ; expands to the definition that was in effect at the ‘(’"
 ; depends: define, undefine, $\d
+; depends: define, undefine, $\d 
 (deftest gnu-m4-5.4 ()
   (m4-test
 #>m4>
@@ -168,3 +169,62 @@ f:f:f:hello world
 f(bye)m4))
 
 
+; depends: define, pushdef, popdef
+(deftest gnu-m4-5.6-1 ()
+  (m4-test
+#>m4>
+define(`foo', `Expansion one.')
+foo
+pushdef(`foo', `Expansion two.')
+foo
+pushdef(`foo', `Expansion three.')
+pushdef(`foo', `Expansion four.')
+popdef(`foo')
+foo
+popdef(`foo', `foo')
+foo
+popdef(`foo')
+foo
+m4
+
+#>m4>
+
+Expansion one.
+
+Expansion two.
+
+
+
+Expansion three.
+
+Expansion one.
+
+foo
+m4))
+
+
+
+; depends: define, undefine, pushdef
+(deftest gnu-m4-5.6-2 ()
+  (m4-test
+#>m4>
+define(`foo', `Expansion one.')
+foo
+pushdef(`foo', `Expansion two.')
+foo
+define(`foo', `Second expansion two.')
+foo
+undefine(`foo')
+foo
+m4
+
+#>m4>
+
+Expansion one.
+
+Expansion two.
+
+Second expansion two.
+
+foo
+m4))
