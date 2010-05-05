@@ -92,13 +92,13 @@
 (defun macro-return (result)
   (error 'macro-invocation-condition :result result))
 
-(defun m4-macro (macro)
-  (let ((stack (gethash macro *m4-runtime-lib*)))
+(defun m4-macro (macro &optional (builtin nil))
+  (let ((stack (gethash macro (if builtin *m4-lib* *m4-runtime-lib*))))
     (when stack
       (aref stack (1- (fill-pointer stack))))))
 
 (defmacro with-m4-lib (&body body)
-  `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib*)))
+  `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib* :key #'copy-array)))
      ,@body))
 
 (defm4macro "dnl" ()
@@ -169,3 +169,21 @@
       "popdef"
     (prog1 "" ; "The expansion of both pushdef and popdef is void"
       (mapc #'popm4macro args))))
+
+(defm4macro "indir" (name &rest args)
+  (let ((macro (m4-macro name)))
+    (cond ((null macro)
+           (warn (format nil "undefined macro `~a'~%" name))
+           "")
+          ((null args)
+           (funcall macro))
+          (t (apply macro args)))))
+
+(defm4macro "builtin" (name &rest args)
+  (let ((macro (m4-macro name t)))
+    (cond ((null macro)
+           (warn (format nil "undefined builtin `~a'~%" name))
+           "")
+          ((null args)
+           (funcall macro))
+          (t (apply macro args)))))
