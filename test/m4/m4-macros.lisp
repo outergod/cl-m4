@@ -203,7 +203,6 @@ foo
 m4))
 
 
-
 ; depends: define, undefine, pushdef
 (deftest gnu-m4-5.6-2 ()
   (m4-test
@@ -227,4 +226,132 @@ Expansion two.
 Second expansion two.
 
 foo
+m4))
+
+
+; depends: define, indir
+(deftest gnu-m4-5.7-1 ()
+  (m4-test
+#>m4>
+define(`$$internal$macro', `Internal macro (name `$0')')
+$$internal$macro
+indir(`$$internal$macro')
+m4
+
+#>m4>
+
+$$internal$macro
+Internal macro (name $$internal$macro)
+m4))
+
+
+; depends: define, undefine, indir
+(deftest gnu-m4-5.7-2 ()
+  (m4-test
+#>m4>
+define(`f', `1')
+f(define(`f', `2'))
+indir(`f', define(`f', `3'))
+indir(`f', undefine(`f'))
+m4
+
+#>m4>
+
+1
+3
+
+m4
+
+#>m4>WARNING: undefined macro `f'
+
+m4))
+
+
+;; ; depends: indir, defn, divnum, define
+;; (deftest gnu-m4-5.7-3 ()
+;;   (m4-test
+;; #>m4>
+;; indir(defn(`defn'), `divnum')
+;; indir(`define', defn(`defn'), `divnum')
+;; indir(`define', `foo', defn(`divnum'))
+;; foo
+;; indir(`divert', defn(`foo'))
+;; m4
+
+;; #>m4>
+
+
+
+;; 0
+
+;; m4
+
+;; #>m4>
+;; error-->m4:stdin:1: Warning: indir: invalid macro name ignored
+;; error-->m4:stdin:2: Warning: define: invalid macro name ignored
+;; error-->m4:stdin:5: empty string treated as 0 in builtin `divert'
+;; m4))
+
+
+; TODO divnum
+; depends: pushdef, define, undefine, builtin, defn, divnum
+(deftest gnu-m4-5.8-1 ()
+  (m4-test
+#>m4>
+pushdef(`define', `hidden')
+undefine(`undefine')
+define(`foo', `bar')
+foo
+dnl builtin(`define', `foo', defn(`divnum'))
+dnl foo
+builtin(`define', `foo', `BAR')
+foo
+undefine(`foo')
+foo
+builtin(`undefine', `foo')
+foo
+m4
+
+#>m4>
+
+
+hidden
+foo
+
+BAR
+undefine(foo)
+BAR
+
+foo
+m4))
+
+
+; depends: builtin, indir
+(deftest gnu-m4-5.8-3 ()
+  (m4-test
+#>m4>
+builtin
+builtin()
+builtin(`builtin')
+builtin(`builtin',)
+builtin(`builtin', ``'
+             ')
+indir(`index')
+m4
+
+#>m4>
+builtin
+
+
+
+
+
+m4
+
+#>m4>undefined builtin `'
+Warning: too few arguments to builtin `builtin'
+undefined builtin `'
+undefined builtin ``'
+'
+Warning: too few arguments to builtin `index'
 m4))
