@@ -46,8 +46,8 @@
      (with-m4-lib
       (with-m4-error ,error
          ,(if signal
-              `(signals ,signal (funcall (m4-macro ,macro) ,@args))
-            `(is (equal ,result (funcall (m4-macro ,macro) ,@args))))))))
+              `(signals ,signal (funcall (m4-macro ,macro) t ,@args))
+            `(is (equal ,result (funcall (m4-macro ,macro) t ,@args))))))))
 
 (deftest m4-test (m4 result &optional (error ""))
   (with-input-from-string (stream m4)

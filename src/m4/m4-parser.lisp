@@ -37,12 +37,12 @@
 
 (defun call-m4-macro (macro args)
   (if (not args)
-      (funcall macro)
-    (apply macro (mapcar #'(lambda (string)
-                             (if (stringp string)
-                                 (string-left-trim " " string)
-                               string)) ; macro-token
-                         (split-merge args ",")))))
+      (funcall macro nil)
+    (apply macro nil (mapcar #'(lambda (string)
+                                 (if (stringp string)
+                                     (string-left-trim '(#\Newline #\Space) string)
+                                   string)) ; macro-token
+                             (split-merge args ",")))))
 
 (defun parse-m4-comment (lexer image)
   (labels ((m4-comment (rec)

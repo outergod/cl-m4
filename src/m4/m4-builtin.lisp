@@ -52,25 +52,32 @@
           (vector-pop stack)
         (remhash name *m4-runtime-lib*)))))
 
-(defmacro defm4macro (name args &body body)
+(defmacro defm4macro (name args (&key (arguments-only t) (minimum-arguments 0)) &body body)
   (let ((macro-args (gensym))
-        (ignored-rest (gensym)))
+        (ignored-rest (gensym))
+        (internal-call (gensym)))
     `(setf (gethash ,name *m4-lib*)
            (make-array 1 :adjustable t :fill-pointer 1
                          :initial-contents
-                         (list #'(lambda (&rest ,macro-args)
-                                   ,(if (member '&rest args)
-                                        `(destructuring-bind ,args ,macro-args
-                                           ,@body)
-                                      `(destructuring-bind (,@args &rest ,ignored-rest) ,macro-args
-                                         (when ,ignored-rest
-                                           (warn (format nil "excess arguments to builtin `~a' ignored~%" ,name)))
-                                         ,@body))))))))
+                         (list #'(lambda (,internal-call &rest ,macro-args)
+                                   (cond ((and ,arguments-only (not ,internal-call) (null ,macro-args)) ; most macros are only recognized with parameters
+                                         ,name)
+                                         ((< (length ,macro-args) ,minimum-arguments)
+                                          (warn (format nil "too few arguments to builtin `~a'~%" ,name))
+                                          "")
+                                         (t ,(if (member '&rest args)
+                                                 `(destructuring-bind ,args ,macro-args
+                                                    ,@body)
+                                               `(destructuring-bind (,@args &rest ,ignored-rest) ,macro-args
+                                                  (when ,ignored-rest
+                                                    (warn (format nil "excess arguments to builtin `~a' ignored~%" ,name)))
+                                                  ,@body))))))))))
 
 (defun defm4runtimemacro (name expansion &optional (replace t))
   (let ((fun (if (macro-token-p expansion)
                  (macro-token-m4macro expansion)
-               #'(lambda (&rest macro-args)
+               #'(lambda (internal-call &rest macro-args)
+                   (declare (ignore internal-call))
                    (macro-return
                     (cl-ppcre:regex-replace-all "\\$(\\d+|#|\\*|@)" expansion
                                                 (replace-with-region
@@ -101,50 +108,77 @@
   `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib* :key #'copy-array)))
      ,@body))
 
-(defm4macro "dnl" ()
+
+(defm4macro "dnl" () (:arguments-only nil)
   (error 'macro-dnl-invocation-condition))
 
-(defm4macro "define" (name &optional (expansion ""))
-  (prog1 "" (defm4runtimemacro name expansion)))
+(defm4macro "define" (name &optional (expansion "")) (:minimum-arguments 1)
+  (prog1 ""
+    (when (string/= "" name)
+      (defm4runtimemacro name expansion))))
 
-(defm4macro "undefine" (&rest args)
-  (if (= 0 (list-length args)) ; "The macro undefine is recognized only with parameters"
-      "undefine"
-    (progn
-      (mapc #'(lambda (name)
-                (remhash name *m4-runtime-lib*))
-            args)
-      "")))
+(defm4macro "undefine" (&rest args) ()
+  (prog1 ""
+    (mapc #'(lambda (name)
+              (remhash name *m4-runtime-lib*))
+          args)))
 
-(defm4macro "defn" (&rest args)
-  (if (= 0 (list-length args)) ; Figured out by trial-and-error
-      "defn"
-    (error 'macro-defn-invocation-condition
-           :macros (mapcar #'(lambda (name)
-                               (if (m4-macro name)
-                                   (make-macro-token (m4-macro name)
-                                                     (if (gethash name *m4-lib*)
-                                                         ""
-                                                       name))
-                                 ""))
-                           args))))
+(defm4macro "defn" (&rest args) ()
+  (error 'macro-defn-invocation-condition
+         :macros (mapcar #'(lambda (name)
+                             (if (m4-macro name)
+                                 (make-macro-token (m4-macro name)
+                                                   (if (gethash name *m4-lib*)
+                                                       ""
+                                                     name))
+                               ""))
+                         args)))
 
-(defm4macro "ifdef" (name string-1 &optional (string-2 ""))
+(defm4macro "pushdef" (name &optional (expansion "")) (:minimum-arguments 1)
+  (prog1 "" ; "The expansion of both pushdef and popdef is void"
+    (when (string/= "" name)
+      (defm4runtimemacro name expansion nil))))
+
+(defm4macro "popdef" (&rest args) ()
+  (prog1 "" ; "The expansion of both pushdef and popdef is void"
+    (mapc #'popm4macro args)))
+
+(defm4macro "indir" (name &rest args) (:minimum-arguments 1)
+  (let ((macro (m4-macro name)))
+    (cond ((null macro)
+           (warn (format nil "undefined macro `~a'~%" name))
+           "")
+          ((null args)
+           (funcall macro t))
+          (t (apply macro t args)))))
+
+(defm4macro "builtin" (name &rest args) (:minimum-arguments 1)
+  (let ((macro (m4-macro name t)))
+    (cond ((null macro)
+           (warn (format nil "undefined builtin `~a'~%" name))
+           "")
+          ((null args)
+           (funcall macro t))
+          (t (apply macro t args)))))
+
+(defm4macro "ifdef" (name string-1 &optional (string-2 "")) (:minimum-arguments 2)
   (macro-return
    (if (m4-macro name)
        string-1
      string-2)))
 
-(defm4macro "ifelse" (&rest args)
+(defm4macro "ifelse" (&rest args) ()
   (labels ((ifelse (string-1 string-2 then &rest else)
              (cond ((string= string-1 string-2)
                     (macro-return then))
+                   ((= 2 (list-length else))
+                    (warn "excess arguments to builtin `ifelse' ignored~%")
+                    (macro-return (car else)))
                    ((> (list-length else) 1)
                     (apply #'ifelse else))
                    (t (macro-return (car else))))))
     (let ((num-args (list-length args)))
-      (cond ((= 0 num-args) "ifelse") ; "The macro ifelse is recognized only with parameters"
-            ((= 1 num-args) "")       ; "Used with only one argument, the ifelse simply discards it and produces no output"
+      (cond ((= 1 num-args) "")       ; "Used with only one argument, the ifelse simply discards it and produces no output"
             ((= 2 num-args)
              (warn "too few arguments to builtin `ifelse'~%")
              "")
@@ -155,35 +189,23 @@
              (ifelse (car args) (cadr args) (caddr args) (cadddr args)))
             (t (apply #'ifelse (car args) (cadr args) (caddr args) (cdddr args)))))))
 
-(defm4macro "shift" (&rest args)
-  (if (= 0 (list-length args)) ; "The macro shift is recognized only with parameters"
-      "shift"
-    (macro-return (format nil (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}") (cdr args)))))
+(defm4macro "shift" (&rest args) ()
+  (macro-return (format nil (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}") (cdr args))))
 
-(defm4macro "pushdef" (name &optional (expansion ""))
-  (prog1 "" ; "The expansion of both pushdef and popdef is void"
-    (defm4runtimemacro name expansion nil)))
-
-(defm4macro "popdef" (&rest args)
-  (if (= 0 (list-length args)) ; "The macros pushdef and popdef are recognized only with parameters"
-      "popdef"
-    (prog1 "" ; "The expansion of both pushdef and popdef is void"
-      (mapc #'popm4macro args))))
-
-(defm4macro "indir" (name &rest args)
-  (let ((macro (m4-macro name)))
-    (cond ((null macro)
-           (warn (format nil "undefined macro `~a'~%" name))
-           "")
-          ((null args)
-           (funcall macro))
-          (t (apply macro args)))))
-
-(defm4macro "builtin" (name &rest args)
-  (let ((macro (m4-macro name t)))
-    (cond ((null macro)
-           (warn (format nil "undefined builtin `~a'~%" name))
-           "")
-          ((null args)
-           (funcall macro))
-          (t (apply macro args)))))
+(defm4macro "dumpdef" (&rest args) (:arguments-only nil)
+  (prog1 ""
+    (dolist (name (sort (mapcar #'(lambda (name)
+                                    (let ((macro (m4-macro name)))
+                                      (if macro
+                                          (format nil "~a:~a~a" name #\tab
+                                                  (if (gethash name *m4-lib*)
+                                                      (concatenate 'string "<" name ">")
+                                                    (handler-case
+                                                     (funcall macro t)
+                                                     (macro-invocation-condition (condition)
+                                                       (macro-invocation-result condition)))))
+                                        (format nil "undefined macro `~a'" name))))
+                                (or args
+                                    (alexandria:hash-table-keys *m4-runtime-lib*)))
+                        #'string<))
+      (print name *error-output*))))
