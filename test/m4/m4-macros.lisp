@@ -18,7 +18,7 @@
 
 (in-suite m4)
 
-
+; TODO format
 ; depends: define, defn, format
 ;; (deftest composite-array ()
 ;;   (m4-test
@@ -29,6 +29,45 @@
 ;; #>m4>
 
 ;; m4))
+
+
+; "For example, if foo is a macro,
+;     foo(() (`(') `(')
+; is a macro call, with one argument, whose value is ‘() (() (’"
+; depends: define, $\d
+(deftest gnu-m4-4.4-1 ()
+  (m4-test
+#>m4>
+define(`foo', `[$1] [$2]')
+foo(() (`(') `(')
+foo(`() (() (')
+m4
+
+#>m4>
+
+[() (() (] []
+[() (() (] []
+m4))
+
+
+; depends: define, $\d
+(deftest gnu-m4-4.4-2 ()
+  (m4-test
+#>m4>
+define(`active', `ACT, IVE')
+define(`show', `$1 $1')
+show(active)
+show(`active')
+show(``active'')
+m4
+
+#>m4>
+
+
+ACT ACT
+ACT, IVE ACT, IVE
+active active
+m4))
 
 
 ; depends: define, $\d
@@ -110,45 +149,6 @@ correct,arg2,arg3 ,arg4
 
 
 arg1,arg2,arg3 ,arg4
-m4))
-
-
-; "For example, if foo is a macro,
-;     foo(() (`(') `(')
-; is a macro call, with one argument, whose value is ‘() (() (’"
-; depends: define, $\d
-(deftest gnu-m4-4.4-1 ()
-  (m4-test
-#>m4>
-define(`foo', `[$1] [$2]')
-foo(() (`(') `(')
-foo(`() (() (')
-m4
-
-#>m4>
-
-[() (() (] []
-[() (() (] []
-m4))
-
-
-; depends: define, $\d
-(deftest gnu-m4-4.4-2 ()
-  (m4-test
-#>m4>
-define(`active', `ACT, IVE')
-define(`show', `$1 $1')
-show(active)
-show(`active')
-show(``active'')
-m4
-
-#>m4>
-
-
-ACT ACT
-ACT, IVE ACT, IVE
-active active
 m4))
 
 
@@ -267,6 +267,7 @@ m4
 m4))
 
 
+; TODO divnum
 ;; ; depends: indir, defn, divnum, define
 ;; (deftest gnu-m4-5.7-3 ()
 ;;   (m4-test
@@ -326,7 +327,8 @@ foo
 m4))
 
 
-; depends: builtin, indir
+; TODO index
+; depends: builtin, indir, index
 (deftest gnu-m4-5.8-3 ()
   (m4-test
 #>m4>
@@ -336,7 +338,7 @@ builtin(`builtin')
 builtin(`builtin',)
 builtin(`builtin', ``'
              ')
-indir(`index')
+dnl indir(`index')
 m4
 
 #>m4>
@@ -345,13 +347,201 @@ builtin
 
 
 
+m4
+
+#>m4>WARNING: undefined builtin `'
+
+
+WARNING: too few arguments to builtin `builtin'
+
+
+WARNING: undefined builtin `'
+
+
+WARNING: undefined builtin ``'
+             '
+
+m4))
+
+
+
+; depends: ifdef, define
+(deftest gnu-m4-6.1 ()
+  (m4-test
+#>m4>
+ifdef(`foo', ``foo' is defined', ``foo' is not defined')
+define(`foo', `')
+ifdef(`foo', ``foo' is defined', ``foo' is not defined')
+ifdef(`no_such_macro', `yes', `no', `extra argument')
+m4
+
+#>m4>
+foo is not defined
+
+foo is defined
+no
+m4
+
+#>m4>WARNING: excess arguments to builtin `ifdef' ignored
+
+m4))
+
+
+; depends: ifelse
+(deftest gnu-m4-6.2-1 ()
+  (m4-test
+#>m4>
+ifelse(`some comments')
+ifelse(`foo', `bar')
+m4
+
+#>m4>
+
 
 m4
 
-#>m4>undefined builtin `'
-Warning: too few arguments to builtin `builtin'
-undefined builtin `'
-undefined builtin ``'
-'
-Warning: too few arguments to builtin `index'
+#>m4>WARNING: too few arguments to builtin `ifelse'
+
 m4))
+
+
+; depends: ifelse, define
+(deftest gnu-m4-6.2-2 ()
+  (m4-test
+#>m4>
+ifelse(`foo', `bar', `true')
+ifelse(`foo', `foo', `true')
+define(`foo', `bar')
+ifelse(foo, `bar', `true', `false')
+ifelse(foo, `foo', `true', `false')
+m4
+#>m4>
+
+true
+
+true
+false
+m4))
+
+
+
+; depends: ifelse, define
+(deftest gnu-m4-6.2-3 ()
+  (m4-test
+#>m4>
+define(`foo', `ifelse(`$#', `0', ``$0'', `arguments:$#')')
+foo
+foo()
+foo(`a', `b', `c')
+m4
+#>m4>
+
+foo
+arguments:1
+arguments:3
+m4))
+
+
+; depends: ifelse, define
+(deftest gnu-m4-6.2-4 ()
+  (m4-test
+#>m4>
+ifelse(`foo', `bar', `third', `gnu', `gnats')
+ifelse(`foo', `bar', `third', `gnu', `gnats', `sixth')
+ifelse(`foo', `bar', `third', `gnu', `gnats', `sixth', `seventh')
+ifelse(`foo', `bar', `3', `gnu', `gnats', `6', `7', `8')
+m4
+
+#>m4>
+gnu
+
+seventh
+7
+m4
+
+#>m4>WARNING: excess arguments to builtin `ifelse' ignored
+
+
+WARNING: excess arguments to builtin `ifelse' ignored
+
+m4))
+
+
+; depends: shift
+(deftest gnu-m4-6.3-1 ()
+  (m4-test
+#>m4>
+shift
+shift(`bar')
+shift(`foo', `bar', `baz')
+m4
+
+#>m4>
+shift
+
+bar,baz
+m4))
+
+
+; depends: define, ifelse, $\d, $#, shift
+(deftest composite-reverse ()
+  (m4-test
+#>m4>
+define(`reverse', `ifelse(`$#', `0', , `$#', `1', ``$1'',
+                          `reverse(shift($@)), `$1'')')
+reverse
+reverse(`foo')
+reverse(`foo', `bar', `gnats', `and gnus')
+m4
+
+#>m4>
+
+
+foo
+and gnus, gnats, bar, foo
+m4))
+
+; TODO incr
+; depends: define, ifelse, shift, incr, $\d
+;; (deftest composite-cond ()
+;;   (m4-test
+;; #>m4>
+;; define(`cond',
+;; `ifelse(`$#', `1', `$1',
+;;         `ifelse($1, `$2', `$3',
+;;                 `$0(shift(shift(shift($@))))')')')dnl
+;; define(`side', `define(`counter', incr(counter))$1')dnl
+;; define(`example1',
+;; `define(`counter', `0')dnl
+;; ifelse(side(`$1'), `yes', `one comparison: ',
+;;        side(`$1'), `no', `two comparisons: ',
+;;        side(`$1'), `maybe', `three comparisons: ',
+;;        `side(`default answer: ')')counter')dnl
+;; define(`example2',
+;; `define(`counter', `0')dnl
+;; cond(`side(`$1')', `yes', `one comparison: ',
+;;      `side(`$1')', `no', `two comparisons: ',
+;;      `side(`$1')', `maybe', `three comparisons: ',
+;;      `side(`default answer: ')')counter')dnl
+;; example1(`yes')
+;; example1(`no')
+;; example1(`maybe')
+;; example1(`feeling rather indecisive today')
+;; example2(`yes')
+;; example2(`no')
+;; example2(`maybe')
+;; example2(`feeling rather indecisive today')
+;; m4
+
+;; #>m4>
+;; one comparison: 3
+;; two comparisons: 3
+;; three comparisons: 3
+;; default answer: 4
+;; one comparison: 1
+;; two comparisons: 2
+;; three comparisons: 3
+;; default answer: 4
+;; m4))
+
+
