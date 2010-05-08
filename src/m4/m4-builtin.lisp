@@ -204,8 +204,10 @@
                                                      (funcall macro t)
                                                      (macro-invocation-condition (condition)
                                                        (macro-invocation-result condition)))))
-                                        (format nil "undefined macro `~a'" name))))
+                                        (progn
+                                          (warn (format nil "undefined macro `~a'" name))
+                                          ""))))
                                 (or args
                                     (alexandria:hash-table-keys *m4-runtime-lib*)))
                         #'string<))
-      (print name *error-output*))))
+      (format *error-output* "~a~%" name))))
