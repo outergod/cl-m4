@@ -37,13 +37,15 @@
 (defvar *m4-macro-name*)
 
 (defun pushm4macro (name fun &optional (replace t))
-  (unless (gethash name *m4-runtime-lib*)
-    (setf (gethash name *m4-runtime-lib*)
-          (make-array 1 :adjustable t :fill-pointer 1)))
   (let ((stack (gethash name *m4-runtime-lib*)))
-    (if replace
-        (setf (aref stack (1- (fill-pointer stack))) fun)
-      (vector-push-extend fun stack))))
+    (if stack
+        (if replace
+            (setf (aref stack (1- (fill-pointer stack))) fun)
+          (vector-push-extend fun stack))
+      (setf (gethash name *m4-runtime-lib*)
+            (make-array 1 :adjustable t :fill-pointer 1
+                          :initial-contents
+                          (list fun))))))
 
 (defun popm4macro (name)
   (let ((stack (gethash name *m4-runtime-lib*)))
@@ -60,8 +62,10 @@
            (make-array 1 :adjustable t :fill-pointer 1
                          :initial-contents
                          (list #'(lambda (,internal-call &rest ,macro-args)
-                                   (cond ((and ,arguments-only (not ,internal-call) (null ,macro-args)) ; most macros are only recognized with parameters
-                                         ,name)
+                                   (cond ((eql :definition ,internal-call)
+                                          (concatenate 'string "<" ,name ">"))
+                                         ((and ,arguments-only (not ,internal-call) (null ,macro-args)) ; most macros are only recognized with parameters
+                                          ,name)
                                          ((< (length ,macro-args) ,minimum-arguments)
                                           (warn (format nil "too few arguments to builtin `~a'~%" ,name))
                                           "")
@@ -77,23 +81,24 @@
   (let ((fun (if (macro-token-p expansion)
                  (macro-token-m4macro expansion)
                #'(lambda (internal-call &rest macro-args)
-                   (declare (ignore internal-call))
-                   (macro-return
-                    (cl-ppcre:regex-replace-all "\\$(\\d+|#|\\*|@)" expansion
-                                                (replace-with-region
-                                                 #'(lambda (match)
-                                                     (cond ((string= "#" match)
-                                                            (write-to-string (length macro-args)))
-                                                           ((string= "*" match)
-                                                            (format nil "~{~a~^,~}" macro-args))
-                                                           ((string= "@" match)
-                                                            (format nil
-                                                                    (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}")
-                                                                    macro-args))
-                                                           (t (let ((num (parse-integer match)))
-                                                                (if (= 0 num)
-                                                                    name
-                                                                  (or (nth (1- num) macro-args) "")))))))))))))
+                   (if (eql :definition internal-call)
+                       expansion
+                     (macro-return
+                      (cl-ppcre:regex-replace-all "\\$(\\d+|#|\\*|@)" expansion
+                                                  (replace-with-region
+                                                   #'(lambda (match)
+                                                       (cond ((string= "#" match)
+                                                              (write-to-string (length macro-args)))
+                                                             ((string= "*" match)
+                                                              (format nil "~{~a~^,~}" macro-args))
+                                                             ((string= "@" match)
+                                                              (format nil
+                                                                      (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}")
+                                                                      macro-args))
+                                                             (t (let ((num (parse-integer match)))
+                                                                  (if (= 0 num)
+                                                                      name
+                                                                    (or (nth (1- num) macro-args) ""))))))))))))))
     (pushm4macro name fun replace)))
 
 (defun macro-return (result)
@@ -197,13 +202,7 @@
     (dolist (name (sort (mapcar #'(lambda (name)
                                     (let ((macro (m4-macro name)))
                                       (if macro
-                                          (format nil "~a:~a~a" name #\tab
-                                                  (if (gethash name *m4-lib*)
-                                                      (concatenate 'string "<" name ">")
-                                                    (handler-case
-                                                     (funcall macro t)
-                                                     (macro-invocation-condition (condition)
-                                                       (macro-invocation-result condition)))))
+                                          (format nil "~a:~a~a" name #\tab (funcall macro :definition))
                                         (progn
                                           (warn (format nil "undefined macro `~a'" name))
                                           ""))))
