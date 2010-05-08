@@ -545,3 +545,43 @@ m4))
 ;; m4))
 
 
+; depends: define, dumpdef
+(deftest gnu-m4-7.1-1 ()
+  (m4-test
+#>m4>
+define(`foo', `Hello world.')
+dumpdef(`foo')
+dumpdef(`define')
+m4
+
+#>m4>
+
+
+
+m4
+
+#>m4>foo:	Hello world.
+define:	<define>
+m4))
+
+
+; depends: pushdef, popdef, dumpdef
+(deftest gnu-m4-7.1-2 ()
+  (m4-test
+#>m4>
+pushdef(`f', ``$0'1')pushdef(`f', ``$0'2')
+f(popdef(`f')dumpdef(`f'))
+f(popdef(`f')dumpdef(`f'))
+m4
+
+#>m4>
+
+f2
+f1
+m4
+
+#>m4>f:	`$0'1
+
+WARNING: undefined macro `f'
+
+m4))
