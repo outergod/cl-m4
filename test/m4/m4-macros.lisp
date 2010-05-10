@@ -585,3 +585,109 @@ m4
 WARNING: undefined macro `f'
 
 m4))
+
+
+;; TODO traceon, traceoff, debugmode, debugfile
+
+
+; depends: define, dnl
+(deftest gnu-m4-8.1-1 ()
+  (m4-test
+#>m4>
+define(`foo', `Macro `foo'.')dnl A very simple macro, indeed.
+foo
+m4
+
+#>m4>
+Macro foo.
+m4))
+
+
+; depends: define, dnl
+(deftest gnu-m4-8.1-2 ()
+  (m4-test
+#>m4>
+dnl(`args are ignored, but side effects occur',
+define(`foo', `like this')) while this text is ignored: undefine(`foo')
+See how `foo' was defined, foo?
+m4
+
+#>m4>
+See how foo was defined, like this?
+m4
+
+#>m4>WARNING: excess arguments to builtin `dnl' ignored
+
+m4))
+
+
+;; ; TODO m4wrap
+;; ; depends: m4wrap, define, dnl
+;; (deftest gnu-m4-8.1-3 ()
+;;   (m4-test
+;; #>m4>
+;; m4wrap(`m4wrap(`2 hi
+;; ')0 hi dnl 1 hi')
+;; define(`hi', `HI')m4
+
+;; #>m4>
+;; 0 HI 2 HI
+;; m4
+
+;; #>m4>WARNING: end of file treated as newline
+
+;; m4))
+
+
+; depends: define, changequote
+(deftest gnu-m4-8.2-1 ()
+  (m4-test
+#>m4>
+changequote(`[', `]')
+define([foo], [Macro [foo].])
+foo
+m4
+
+#>m4>
+
+
+Macro foo.
+m4))
+
+
+; depends: define, changequote
+(deftest gnu-m4-8.2-2 ()
+  (m4-test
+#>m4>
+changequote(`[[[', `]]]')
+define([[[foo]]], [[[Macro [[[[[foo]]]]].]]])
+foo
+m4
+
+#>m4>
+
+
+Macro [[foo]].
+m4))
+
+
+; depends: define, changequote
+(deftest gnu-m4-8.2-3 ()
+  (m4-test
+#>m4>
+define(`foo', `Macro `FOO'.')
+changequote(`', `')
+foo
+`foo'
+changequote(`,)
+foo
+m4
+
+#>m4>
+
+
+Macro `FOO'.
+`Macro `FOO'.'
+
+Macro FOO.
+m4))
