@@ -154,10 +154,10 @@
          (*m4-macro-name* "[_a-zA-Z]\\w*")
          (lexer (make-instance 'm4-input-stream
                                :stream stream
-                               :rules '((*m4-quote-start* . :quote-start)
+                               :rules '((*m4-macro-name* . :macro-name)
+                                        (*m4-quote-start* . :quote-start)
                                         (*m4-quote-end* . :quote-end)
                                         (*m4-comment* . :comment)
-                                        (*m4-macro-name* . :macro-name)
                                         ("\\n" . :newline)
                                         ("\\(" . :open-paren)
                                         ("\\)" . :close-paren)
