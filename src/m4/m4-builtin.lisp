@@ -16,6 +16,16 @@
 
 (in-package :evol)
 
+(defun quote-regexp (string)
+  (let ((quote-charbag "\\()^$[]{}")
+        (quoted-string (make-array (length string) :adjustable t :fill-pointer 0)))
+    (map 'nil #'(lambda (char)
+                  (when (find char quote-charbag)
+                    (vector-push-extend #\\ quoted-string))
+                  (vector-push-extend char quoted-string))
+         string)
+    (coerce quoted-string 'string)))
+
 (defstruct (macro-token (:constructor make-macro-token (m4macro name)))
   m4macro name)
 
@@ -114,9 +124,6 @@
      ,@body))
 
 
-(defm4macro "dnl" () (:arguments-only nil)
-  (error 'macro-dnl-invocation-condition))
-
 (defm4macro "define" (name &optional (expansion "")) (:minimum-arguments 1)
   (prog1 ""
     (when (string/= "" name)
@@ -210,3 +217,14 @@
                                     (alexandria:hash-table-keys *m4-runtime-lib*)))
                         #'string<))
       (format *error-output* "~a~%" name))))
+
+;; TODO traceon, traceoff, debugmode, debugfile
+
+(defm4macro "dnl" () (:arguments-only nil)
+  (error 'macro-dnl-invocation-condition))
+
+(defm4macro "changequote" (&optional (start "`") (end "'")) (:arguments-only nil)
+  (prog1 ""
+    (let ((end (if (string= "" end) "'" end)))
+      (setq *m4-quote-start* (quote-regexp start)
+            *m4-quote-end* (quote-regexp end)))))
