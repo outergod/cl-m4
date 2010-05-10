@@ -58,7 +58,8 @@
 
 (defun parse-m4-quote (lexer)
   (let ((row (lexer-row lexer))
-        (column (lexer-column lexer)))
+        (column (lexer-column lexer))
+        (*m4-macro-name* "")) ; m4 madness: quote ends may be recognized that would usually be macro names
     (labels ((m4-quote (rec quoting-level)
                (multiple-value-bind (class image)
                    (stream-read-token lexer)
