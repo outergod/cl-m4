@@ -130,8 +130,8 @@
         stream
       (labels ((scan (chunk rules)
                  (some #'(lambda (pair)
-                           (let ((match (cl-ppcre:scan-to-strings (concatenate 'string "^" (car pair)) double-buffer)))
-                             (when match
+                           (let ((match (cl-ppcre:scan-to-strings (concatenate 'string "^" (eval (car pair))) double-buffer)))
+                             (when (and match (> (length match) 0)) ; zero-length matches are not allowed
                                (if (= (length match) (length chunk))
                                    (scan (flush-buffer stream) (list pair))
                                  (list (cdr pair) match)))))
