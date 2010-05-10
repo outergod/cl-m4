@@ -691,3 +691,69 @@ Macro `FOO'.
 
 Macro FOO.
 m4))
+
+
+; depends: define, changequote
+(deftest gnu-m4-8.2-4 ()
+  (m4-test
+#>m4>
+define(`echo', `$@')
+define(`hi', `HI')
+changequote(`q', `Q')
+q hi Q hi
+echo(hi)
+changequote
+changequote(`-', `EOF')
+- hi EOF hi
+changequote
+changequote(`1', `2')
+hi1hi2
+hi 1hi2
+m4
+
+#>m4>
+
+
+
+q HI Q HI
+qHIQ
+
+
+ hi  HI
+
+
+hi1hi2
+HI hi
+m4))
+
+
+; depends: define, changequote, $#, $@
+(deftest gnu-m4-8.2-5 ()
+  (m4-test
+#>m4>
+define(`echo', `$#:$@:')
+define(`hi', `HI')
+changequote(`(',`)')
+echo(hi)
+changequote
+changequote(`((', `))')
+echo(hi)
+echo((hi))
+changequote
+changequote(`,', `)')
+echo(hi,hi)bye)
+m4
+
+#>m4>
+
+
+
+0::hi
+
+
+1:HI:
+0::hi
+
+
+1:HIhibye:
+m4))
