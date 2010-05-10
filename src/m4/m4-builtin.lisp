@@ -26,6 +26,21 @@
          string)
     (coerce quoted-string 'string)))
 
+(defun unquote-regexp (string)
+  (let ((quote-charbag "\\()^$[]{}")
+        (char-list (coerce string 'list)))
+    (labels ((acc (rec char rest)
+               (cond ((null rest)
+                      (coerce (nreverse (cons char rec)) 'string))
+                     ((and (string= "\\" char)
+                           (find (car rest) quote-charbag))
+                      (acc rec (car rest) (cdr rest)))
+                     (t (acc (cons char rec) (car rest) (cdr rest))))))
+      (if (null char-list)
+          ""
+        (acc (list) (car char-list) (cdr char-list))))))
+
+
 (defstruct (macro-token (:constructor make-macro-token (m4macro name)))
   m4macro name)
 
@@ -45,6 +60,12 @@
 (defvar *m4-quote-end*)
 (defvar *m4-comment*)
 (defvar *m4-macro-name*)
+
+(defun m4-quote-string (string)
+  (concatenate 'string
+               (unquote-regexp *m4-quote-start*)
+               string
+               (unquote-regexp *m4-quote-end*)))
 
 (defun pushm4macro (name fun &optional (replace t))
   (let ((stack (gethash name *m4-runtime-lib*)))
@@ -103,7 +124,7 @@
                                                               (format nil "~{~a~^,~}" macro-args))
                                                              ((string= "@" match)
                                                               (format nil
-                                                                      (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}")
+                                                                      (concatenate 'string "~{" (m4-quote-string "~a") "~^,~}")
                                                                       macro-args))
                                                              (t (let ((num (parse-integer match)))
                                                                   (if (= 0 num)
@@ -202,7 +223,7 @@
             (t (apply #'ifelse (car args) (cadr args) (caddr args) (cdddr args)))))))
 
 (defm4macro "shift" (&rest args) ()
-  (macro-return (format nil (concatenate 'string "~{" *m4-quote-start* "~a" *m4-quote-end* "~^,~}") (cdr args))))
+  (macro-return (format nil (concatenate 'string "~{" (m4-quote-string "~a") "~^,~}") (cdr args))))
 
 (defm4macro "dumpdef" (&rest args) (:arguments-only nil)
   (prog1 ""
