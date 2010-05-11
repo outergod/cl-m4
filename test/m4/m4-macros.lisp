@@ -908,3 +908,55 @@ m4
 m4))
 
 
+; depends: define, m4wrap
+(deftest gnu-m4-8.5-1 ()
+  (m4-test
+#>m4eof>
+define(`cleanup', `This is the `cleanup' action.
+')
+m4wrap(`cleanup')
+This is the first and last normal input line.
+m4eof
+
+#>m4>
+
+
+This is the first and last normal input line.
+This is the cleanup action.
+m4))
+
+
+;; ; TODO eval, decr
+;; ; depends: define, ifelse, $\d, eval, m4wrap, decr
+;; (deftest gnu-m4-8.5-2 ()
+;;   (m4-test
+;; #>m4eof>
+;; define(`f', `ifelse(`$1', `0', `Answer: 0!=1
+;; ', eval(`$1>1'), `0', `Answer: $2$1=eval(`$2$1')
+;; ', `m4wrap(`f(decr(`$1'), `$2$1*')')')')
+;; f(`10')
+;; m4eof
+
+;; #>m4>
+
+
+;; Answer: 10*9*8*7*6*5*4*3*2*1=3628800
+;; m4))
+
+
+; depends: define, m4wrap
+(deftest gnu-m4-8.5-3 ()
+  (m4-test
+#>m4eof>
+define(`aa', `AA
+')
+m4wrap(`a')m4wrap(`a')
+m4eof
+
+#>m4>
+
+
+AA
+m4))
+
+
