@@ -808,4 +808,103 @@ hiHIhi
 m4))
 
 
+; depends: define, changecom
+(deftest gnu-m4-8.3-1 ()
+  (m4-test
+#>m4>
+define(`comment', `COMMENT')
+# A normal comment
+changecom(`/*', `*/')
+# Not a comment anymore
+But: /* this is a comment now */ while this is not a comment
+m4
+
+#>m4>
+
+# A normal comment
+
+# Not a COMMENT anymore
+But: /* this is a comment now */ while this is not a COMMENT
+m4))
+
+
+; depends: define, changecom
+(deftest gnu-m4-8.3-2 ()
+  (m4-test
+#>m4>
+define(`comment', `COMMENT')
+changecom
+# Not a comment anymore
+changecom(`#', `')
+# comment again
+m4
+
+#>m4>
+
+
+# Not a COMMENT anymore
+
+# comment again
+m4))
+
+
+; depends: define, changecom
+(deftest gnu-m4-8.3-3 ()
+  (m4-test
+#>m4>
+define(`hi', `HI')
+define(`hi1hi2', `hello')
+changecom(`q', `Q')
+q hi Q hi
+changecom(`1', `2')
+hi1hi2
+hi 1hi2
+m4
+
+#>m4>
+
+
+
+q hi Q HI
+
+hello
+HI 1hi2
+m4))
+
+
+; depends: define, changecom
+(deftest gnu-m4-8.3-4 ()
+  (m4-test
+#>m4>
+define(`echo', `$#:$*:$@:')
+define(`hi', `HI')
+changecom(`(',`)')
+echo(hi)
+changecom
+changecom(`((', `))')
+echo(hi)
+echo((hi))
+changecom(`,', `)')
+echo(hi,hi)bye)
+changecom
+echo(hi,`,`'hi',hi)
+echo(hi,`,`'hi',hi`'changecom(`,,', `hi'))
+m4
+
+#>m4>
+
+
+
+0:::(hi)
+
+
+1:HI:HI:
+0:::((hi))
+
+1:HI,hi)bye:HI,hi)bye:
+
+3:HI,,HI,HI:HI,,`'hi,HI:
+3:HI,,`'hi,HI:HI,,`'hi,HI:
+m4))
+
 

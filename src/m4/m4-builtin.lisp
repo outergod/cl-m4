@@ -17,7 +17,7 @@
 (in-package :evol)
 
 (defun quote-regexp (string)
-  (let ((quote-charbag "\\()^$[]{}")
+  (let ((quote-charbag "\\()^$[]{}*?.")
         (quoted-string (make-array (length string) :adjustable t :fill-pointer 0)))
     (map 'nil #'(lambda (char)
                   (when (find char quote-charbag)
@@ -27,7 +27,7 @@
     (coerce quoted-string 'string)))
 
 (defun unquote-regexp (string)
-  (let ((quote-charbag "\\()^$[]{}")
+  (let ((quote-charbag "\\()^$[]{}*?.")
         (char-list (coerce string 'list)))
     (labels ((acc (rec char rest)
                (cond ((null rest)
@@ -58,7 +58,8 @@
 (defvar *m4-runtime-lib*)
 (defvar *m4-quote-start*)
 (defvar *m4-quote-end*)
-(defvar *m4-comment*)
+(defvar *m4-comment-start*)
+(defvar *m4-comment-end*)
 (defvar *m4-macro-name*)
 
 (defun m4-quote-string (string)
@@ -249,3 +250,9 @@
     (let ((end (if (string= "" end) "'" end)))
       (setq *m4-quote-start* (quote-regexp start)
             *m4-quote-end* (quote-regexp end)))))
+
+(defm4macro "changecom" (&optional (start "") (end "\n")) (:arguments-only nil)
+  (prog1 ""
+    (let ((end (if (string= "" end) "\n" end)))
+      (setq *m4-comment-start* (quote-regexp start)
+            *m4-comment-end* (quote-regexp end)))))
