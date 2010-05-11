@@ -65,12 +65,17 @@
 
 (defun parse-m4-quote (lexer)
   (let ((row (lexer-row lexer))
-        (column (lexer-column lexer))
-        (*m4-macro-name* "")) 
+        (column (lexer-column lexer)))
     (labels ((m4-quote (rec quoting-level)
                (multiple-value-bind (class image)
+                   (if (= 0 (or (search *m4-quote-end* *m4-quote-start*)
+                                -1)) ; "If end is a prefix of start, the
+                                     ;  end-quote will be recognized in preference to a
+                                     ;  nested begin-quote"
+                       (with-tokens-active (*m4-quote-end*)
+                         (stream-read-token lexer))
                    (with-tokens-active (*m4-quote-start* *m4-quote-end*)
-                     (stream-read-token lexer))
+                     (stream-read-token lexer)))
                  (cond ((null class)
                         (error 'm4-parse-error :message "EOF with unfinished quoting" :row row :column column))
                         ((equal :quote-end class)
