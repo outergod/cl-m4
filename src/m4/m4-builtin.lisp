@@ -61,6 +61,7 @@
 (defvar *m4-comment-start*)
 (defvar *m4-comment-end*)
 (defvar *m4-macro-name*)
+(defvar *m4-wrap-stack*)
 
 (defun m4-quote-string (string)
   (concatenate 'string
@@ -169,12 +170,12 @@
                          args)))
 
 (defm4macro "pushdef" (name &optional (expansion "")) (:minimum-arguments 1)
-  (prog1 "" ; "The expansion of both pushdef and popdef is void"
+  (prog1 ""
     (when (string/= "" name)
       (defm4runtimemacro name expansion nil))))
 
 (defm4macro "popdef" (&rest args) ()
-  (prog1 "" ; "The expansion of both pushdef and popdef is void"
+  (prog1 ""
     (mapc #'popm4macro args)))
 
 (defm4macro "indir" (name &rest args) (:minimum-arguments 1)
@@ -212,13 +213,15 @@
                     (apply #'ifelse else))
                    (t (macro-return (car else))))))
     (let ((num-args (list-length args)))
-      (cond ((= 1 num-args) "")       ; "Used with only one argument, the ifelse simply discards it and produces no output"
+      (cond ((= 1 num-args) "") ; "Used with only one argument, the ifelse
+                                ;  simply discards it and produces no output"
             ((= 2 num-args)
              (warn "too few arguments to builtin `ifelse'~%")
              "")
             ((< num-args 5)
              (ifelse (car args) (cadr args) (caddr args) (or (cadddr args) "")))
-            ((= 5 num-args)           ; If called with three or four arguments...A final fifth argument is ignored, after triggering a warning
+            ((= 5 num-args) ; "If called with three or four arguments...A final
+                            ;  fifth argument is ignored, after triggering a warning"
              (warn "excess arguments to builtin `ifelse' ignored~%")
              (ifelse (car args) (cadr args) (caddr args) (cadddr args)))
             (t (apply #'ifelse (car args) (cadr args) (caddr args) (cdddr args)))))))
@@ -251,8 +254,15 @@
       (setq *m4-quote-start* (quote-regexp start)
             *m4-quote-end* (quote-regexp end)))))
 
-(defm4macro "changecom" (&optional (start "") (end "\n")) (:arguments-only nil)
+(defm4macro "changecom" (&optional (start "") (end (string #\newline))) (:arguments-only nil)
   (prog1 ""
-    (let ((end (if (string= "" end) "\n" end)))
+    (let ((end (if (string= "" end) (string #\newline) end)))
       (setq *m4-comment-start* (quote-regexp start)
             *m4-comment-end* (quote-regexp end)))))
+
+(defm4macro "m4wrap" (&rest strings) (:minimum-arguments 1)
+  (prog1 ""
+    (push (format nil "~{~a~^ ~}" strings) *m4-wrap-stack*)))
+
+;; TODO include, sinclude
+

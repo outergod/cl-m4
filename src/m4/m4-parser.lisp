@@ -56,7 +56,8 @@
         (column (lexer-column lexer)))
     (labels ((m4-comment (rec)
                (multiple-value-bind (class image)
-                   (stream-read-token lexer)
+                   (with-tokens-active (*m4-comment-end*)
+                     (stream-read-token lexer))
                  (cond ((null class)
                         (error 'm4-parse-error :message "end of file in comment" :row row :column column))
                        ((equal :comment-end class)
@@ -154,7 +155,12 @@
              (multiple-value-bind (class image)
                  (stream-read-token lexer)
                (cond ((null class)
-                     (apply #'concatenate 'string (nreverse rec)))
+                      (if *m4-wrap-stack*
+                          (progn
+                            (lexer-unread-sequence lexer (apply #'concatenate 'string *m4-wrap-stack*))
+                            (let ((*m4-wrap-stack* (list)))
+                              (m4 rec)))
+                        (apply #'concatenate 'string (nreverse rec))))
                      ((equal :quote-start class)
                       (m4 (cons (parse-m4-quote lexer) rec)))
                      ((equal :comment-start class)
@@ -174,6 +180,7 @@
          (*m4-comment-start* "#")
          (*m4-comment-end* "\\n")
          (*m4-macro-name* "[_a-zA-Z]\\w*")
+         (*m4-wrap-stack* (list))
          (lexer (make-instance 'm4-input-stream
                                :stream stream
                                :rules '((*m4-comment-start* . :comment-start)
