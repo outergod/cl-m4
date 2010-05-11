@@ -16,6 +16,13 @@
 
 (in-package :evol)
 
+(defmacro with-tokens-active ((&rest tokens) &body body)
+  `(let ,(mapcar #'(lambda (token)
+                     (list token ""))
+                 (set-difference '(*m4-quote-start* *m4-quote-end* *m4-comment* *m4-macro-name*)
+                                 tokens))
+     ,@body))
+
 (define-condition m4-parse-error (error)
   ((message :initarg :message
             :reader m4-parse-error-message)
@@ -24,14 +31,14 @@
    (column :initarg :column
            :reader m4-parse-error-column)))
 
-(defun split-merge (string-list split-string)
+(defun split-merge (string-list split-token)
   (labels ((acc (rec string rest)
                 (let ((char (car rest)))
                   (cond ((null char) (nreverse (cons string rec)))
+                        ((equal split-token (car rest))
+                         (acc (cons string rec) "" (cdr rest)))
                         ((not (stringp char)) ; macro-token
                          (acc (cons char rec) "" (cdr rest)))
-                        ((string= split-string (car rest))
-                         (acc (cons string rec) "" (cdr rest)))
                         (t (acc rec (concatenate 'string string char) (cdr rest)))))))
           (acc (list) "" string-list)))
 
@@ -42,7 +49,7 @@
                                  (if (stringp string)
                                      (string-left-trim '(#\Newline #\Space) string)
                                    string)) ; macro-token
-                             (split-merge args ",")))))
+                             (split-merge args :separator)))))
 
 (defun parse-m4-comment (lexer image)
   (labels ((m4-comment (rec)
@@ -59,10 +66,11 @@
 (defun parse-m4-quote (lexer)
   (let ((row (lexer-row lexer))
         (column (lexer-column lexer))
-        (*m4-macro-name* "")) ; m4 madness: quote ends may be recognized that would usually be macro names
+        (*m4-macro-name* "")) 
     (labels ((m4-quote (rec quoting-level)
                (multiple-value-bind (class image)
-                   (stream-read-token lexer)
+                   (with-tokens-active (*m4-quote-start* *m4-quote-end*)
+                     (stream-read-token lexer))
                  (cond ((null class)
                         (error 'm4-parse-error :message "EOF with unfinished quoting" :row row :column column))
                         ((equal :quote-end class)
@@ -84,7 +92,8 @@
                  (cons string rec)))
              (m4-macro-arguments (rec paren-level)
                (multiple-value-bind (class image)
-                   (stream-read-token lexer)
+                   (with-tokens-active (*m4-quote-start* *m4-macro-name* *m4-comment*)
+                     (stream-read-token lexer))
                  (cond ((null class)
                         (error 'm4-parse-error :message "EOF with unfinished argument list" :row row :column column))
                        ((equal :close-paren class)
@@ -99,6 +108,9 @@
                         (m4-macro-arguments (m4-group-merge (parse-m4-comment lexer image) rec paren-level) paren-level))
                        ((equal :macro-name class)
                         (m4-macro-arguments (m4-group-merge (parse-m4-macro lexer image) rec paren-level) paren-level))
+                       ((and (= 1 paren-level)
+                             (equal :comma class))
+                        (m4-macro-arguments (cons :separator rec) paren-level))
                        (t (m4-macro-arguments (m4-group-merge image rec paren-level) paren-level))))))
       (m4-macro-arguments (list "") 1))))
 
@@ -159,6 +171,7 @@
                                         (*m4-quote-start* . :quote-start)
                                         (*m4-quote-end* . :quote-end)
                                         (*m4-comment* . :comment)
+                                        ("," . :comma)
                                         ("\\n" . :newline)
                                         ("\\(" . :open-paren)
                                         ("\\)" . :close-paren)
