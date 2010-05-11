@@ -757,3 +757,55 @@ m4
 
 1:HIhibye:
 m4))
+
+
+; depends: changequote, dnl, define, $\*, $\d
+(deftest gnu-m4-8.2-6 ()
+  (m4-test
+#>m4>
+changequote(`[', `]')dnl
+define([a], [1, (b)])dnl
+define([b], [2])dnl
+define([quote], [[$*]])dnl
+define([expand], [_$0(($1))])dnl
+define([_expand],
+  [changequote([(], [)])$1changequote`'changequote(`[', `]')])dnl
+expand([a, a, [a, a], [[a, a]]])
+quote(a, a, [a, a], [[a, a]])
+m4
+
+#>m4>
+1, (2), 1, (2), a, a, [a, a]
+1,(2),1,(2),a, a,[a, a]
+m4))
+
+
+; depends: define, changequote
+(deftest gnu-m4-8.2-7 ()
+  (m4-test
+#>m4>
+define(`hi', `HI')
+changequote(`""', `"')
+""hi"""hi"
+""hi" ""hi"
+""hi"" "hi"
+changequote
+`hi`hi'hi'
+changequote(`"', `"')
+"hi"hi"hi"
+m4
+
+#>m4>
+
+
+hihi
+hi hi
+hi" "HI"
+
+hi`hi'hi
+
+hiHIhi
+m4))
+
+
+
