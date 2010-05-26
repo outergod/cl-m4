@@ -265,4 +265,15 @@
     (push (format nil "~{~a~^ ~}" strings) *m4-wrap-stack*)))
 
 ;; TODO include, sinclude
+; stub
+(defun process-m4 (stream))
 
+;; (defm4macro "include" (file) (:minimum-arguments 1)
+;;   (prog1 ""
+;;     (cond ((not (cl-fad:file-exists-p file))
+;;            (warn (format nil "cannot open `~a': No such file or directory" file)))
+;;           ((cl-fad:directory-exists-p file)
+;;            (warn (format nil "cannot open `~a': Is a directory" file)))
+;;           )))
+;;     (with-open-file (stream file) (process-m4 stream)))
+  
