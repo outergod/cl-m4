@@ -264,16 +264,21 @@
   (prog1 ""
     (push (format nil "~{~a~^ ~}" strings) *m4-wrap-stack*)))
 
-;; TODO include, sinclude
-; stub
-(defun process-m4 (stream))
+(flet ((m4-include (file warnfn)
+  (prog1 ""                   
+    (cond ((not (cl-fad:file-exists-p file))
+           (funcall warnfn (format nil "cannot open `~a': No such file or directory" file)))
+          ((cl-fad:directory-exists-p file)
+           (funcall warnfn (format nil "cannot open `~a': Is a directory" file)))
+          (t (handler-case (macro-return (with-open-file (stream file)
+                                           (let ((string (make-string (file-length stream))))
+                                             (read-sequence string stream)
+                                             string)))
+               (condition ()
+                 (funcall warnfn (format nil "cannot open `~a': Permission denied" file)))))))))
 
-;; (defm4macro "include" (file) (:minimum-arguments 1)
-;;   (prog1 ""
-;;     (cond ((not (cl-fad:file-exists-p file))
-;;            (warn (format nil "cannot open `~a': No such file or directory" file)))
-;;           ((cl-fad:directory-exists-p file)
-;;            (warn (format nil "cannot open `~a': Is a directory" file)))
-;;           )))
-;;     (with-open-file (stream file) (process-m4 stream)))
-  
+  (defm4macro "include" (file) (:minimum-arguments 1)
+    (m4-include file #'warn)
+
+  (defm4macro "sinclude" (file) (:minimum-arguments 1)
+    (m4-include file #'identity))))
