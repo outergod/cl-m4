@@ -960,3 +960,39 @@ AA
 m4))
 
 
+; depends: include, sinclude
+(deftest gnu-m4-9.1-1 ()
+  (m4-test
+#>m4>
+include(`none')
+include()
+sinclude(`none')
+sinclude()
+m4
+#>m4>
+
+
+
+
+m4
+
+#>m4>WARNING: cannot open `none': No such file or directory
+
+WARNING: cannot open `': No such file or directory
+m4))
+
+
+; depends: define, include
+(deftest gnu-m4-9.1-2 ()
+  (m4-test
+#>m4eof>
+define(`foo', `FOO')
+include(`fixtures/incl.m4')dnl FIXME include path
+m4eof
+#>m4>
+
+Include file start
+FOO
+Include file end
+
+m4))
