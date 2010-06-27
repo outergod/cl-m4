@@ -18,6 +18,10 @@
 
 (in-suite m4)
 
+(eval-when (:compile-toplevel)
+  (defparameter *cwd* (make-pathname
+                       :directory (pathname-directory *compile-file-truename*))))
+
 ; TODO format
 ; depends: define, defn, format
 ;; (deftest composite-array ()
@@ -262,7 +266,7 @@ m4
 
 m4
 
-#>m4>WARNING: undefined macro `f'
+:error #>m4>WARNING: undefined macro `f'
 
 m4))
 
@@ -287,7 +291,7 @@ m4))
 
 ;; m4
 
-;; #>m4>
+;; :error #>m4>
 ;; error-->m4:stdin:1: Warning: indir: invalid macro name ignored
 ;; error-->m4:stdin:2: Warning: define: invalid macro name ignored
 ;; error-->m4:stdin:5: empty string treated as 0 in builtin `divert'
@@ -349,7 +353,7 @@ builtin
 
 m4
 
-#>m4>WARNING: undefined builtin `'
+:error #>m4>WARNING: undefined builtin `'
 
 
 WARNING: too few arguments to builtin `builtin'
@@ -382,7 +386,7 @@ foo is defined
 no
 m4
 
-#>m4>WARNING: excess arguments to builtin `ifdef' ignored
+:error #>m4>WARNING: excess arguments to builtin `ifdef' ignored
 
 m4))
 
@@ -400,7 +404,7 @@ m4
 
 m4
 
-#>m4>WARNING: too few arguments to builtin `ifelse'
+:error #>m4>WARNING: too few arguments to builtin `ifelse'
 
 m4))
 
@@ -459,7 +463,7 @@ seventh
 7
 m4
 
-#>m4>WARNING: excess arguments to builtin `ifelse' ignored
+:error #>m4>WARNING: excess arguments to builtin `ifelse' ignored
 
 
 WARNING: excess arguments to builtin `ifelse' ignored
@@ -560,7 +564,7 @@ m4
 
 m4
 
-#>m4>foo:	Hello world.
+:error #>m4>foo:	Hello world.
 define:	<define>
 m4))
 
@@ -580,7 +584,7 @@ f2
 f1
 m4
 
-#>m4>f:	`$0'1
+:error #>m4>f:	`$0'1
 
 WARNING: undefined macro `f'
 
@@ -616,7 +620,7 @@ m4
 See how foo was defined, like this?
 m4
 
-#>m4>WARNING: excess arguments to builtin `dnl' ignored
+:error #>m4>WARNING: excess arguments to builtin `dnl' ignored
 
 m4))
 
@@ -976,7 +980,7 @@ m4
 
 m4
 
-#>m4>WARNING: cannot open `none': No such file or directory
+:error #>m4>WARNING: cannot open `none': No such file or directory
 
 WARNING: cannot open `': No such file or directory
 m4))
@@ -987,12 +991,32 @@ m4))
   (m4-test
 #>m4eof>
 define(`foo', `FOO')
-include(`fixtures/incl.m4')dnl FIXME include path
+include(`incl.m4')
 m4eof
+
 #>m4>
 
 Include file start
 FOO
 Include file end
 
-m4))
+m4
+:include-path (list (merge-pathnames "fixtures/" *cwd*))))
+
+
+; depends: define, include
+(deftest gnu-m4-9.1-3 ()
+  (m4-test
+#>m4eof>
+define(`bar', include(`incl.m4'))
+This is `bar':  >>bar<<
+m4eof
+
+#>m4>
+
+This is bar:  >>Include file start
+foo
+Include file end
+<<
+m4
+:include-path (list (merge-pathnames "fixtures/" *cwd*))))

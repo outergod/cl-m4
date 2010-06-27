@@ -62,6 +62,9 @@
 (defvar *m4-comment-end*)
 (defvar *m4-macro-name*)
 (defvar *m4-wrap-stack*)
+(defvar *m4-include-path*)
+(defvar *m4-diversion*)
+(defvar *m4-diversion-table*)
 
 (defun m4-quote-string (string)
   (concatenate 'string
@@ -264,13 +267,12 @@
   (prog1 ""
     (push (format nil "~{~a~^ ~}" strings) *m4-wrap-stack*)))
 
-(flet ((m4-include (file warnfn)
-         (prog1 ""                   
-           (cond ((or (string= "" file)
+(labels ((m4-include-file (file original-arg)
+           (cond ((or (string= "" original-arg)
                       (not (cl-fad:file-exists-p file)))
-                  (funcall warnfn (format nil "cannot open `~a': No such file or directory" file)))
+                  (format nil "cannot open `~a': No such file or directory" original-arg))
                  ((cl-fad:directory-exists-p file)
-                  (funcall warnfn (format nil "cannot open `~a': Is a directory" file)))
+                  (format nil "cannot open `~a': Is a directory" original-arg))
                  (t (handler-case (macro-return (with-open-file (stream file)
                                                   (let ((string (make-string (file-length stream))))
                                                     (read-sequence string stream)
@@ -278,10 +280,22 @@
                       (macro-invocation-condition (condition)
                         (error condition))
                       (condition ()
-                        (funcall warnfn (format nil "cannot open `~a': Permission denied" file)))))))))
+                        (format nil "cannot open `~a': Permission denied" original-arg))))))
+         (m4-include (path warnfn)
+           (prog1 ""
+             (funcall warnfn 
+               (if (eql :absolute (car (pathname-directory path)))
+                   (m4-include-file path path)
+                 (or (some #'(lambda (include-path)
+                                 (prog1 nil (m4-include-file (merge-pathnames path include-path) path)))
+                           *m4-include-path*)
+                     (m4-include-file (merge-pathnames path (car *m4-include-path*)) path)))))))
 
   (defm4macro "include" (file) (:minimum-arguments 1)
     (m4-include file #'warn))
 
   (defm4macro "sinclude" (file) (:minimum-arguments 1)
     (m4-include file #'identity)))
+
+;; (defm4macro "divert" (&optional (number 0)) (:arguments-only nil)
+;  ...)

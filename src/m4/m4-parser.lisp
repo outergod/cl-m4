@@ -174,13 +174,16 @@
                      (t (m4 (cons image rec)))))))
     (m4 (list))))
 
-(defun process-m4 (stream)
+(defun process-m4 (stream &optional (include-path (list)) (prepend-include-path (list)))
   (let* ((*m4-quote-start* "`")
          (*m4-quote-end* "'")
          (*m4-comment-start* "#")
          (*m4-comment-end* "\\n")
          (*m4-macro-name* "[_a-zA-Z]\\w*")
          (*m4-wrap-stack* (list))
+         (*m4-include-path* (append (reverse prepend-include-path) (list "./") include-path))
+         (*m4-diversion* 0)
+         (*m4-diversion-table* (make-hash-table))
          (lexer (make-instance 'm4-input-stream
                                :stream stream
                                :rules '((*m4-comment-start* . :comment-start)
