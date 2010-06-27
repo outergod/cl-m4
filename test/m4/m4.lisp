@@ -49,7 +49,7 @@
               `(signals ,signal (funcall (m4-macro ,macro) t ,@args))
             `(is (equal ,result (funcall (m4-macro ,macro) t ,@args))))))))
 
-(deftest m4-test (m4 result &optional (error ""))
+(deftest m4-test (m4 result &key (error "") include-path)
   (with-input-from-string (stream m4)
     (with-m4-error error
-      (is (equal result (evol:process-m4 stream))))))
+      (is (equal result (evol:process-m4 stream include-path))))))
