@@ -52,4 +52,4 @@
 (deftest m4-test (m4 result &key (error "") include-path)
   (with-input-from-string (stream m4)
     (with-m4-error error
-      (is (equal result (evol:process-m4 stream include-path))))))
+      (is (equal result (evol:process-m4 stream :include-path include-path))))))
