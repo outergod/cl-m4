@@ -51,6 +51,11 @@
                                    string)) ; macro-token
                              (split-merge args :separator)))))
 
+(defun m4-out (word)
+  (with-m4-diversion-stream (out)
+    (write-string word out)))
+
+
 (defun parse-m4-comment (lexer image)
   (let ((row (lexer-row lexer))
         (column (lexer-column lexer)))
@@ -151,30 +156,31 @@
          "")))))
 
 (defun parse-m4 (lexer)
-  (labels ((m4 (rec)
-             (multiple-value-bind (class image)
-                 (stream-read-token lexer)
-               (cond ((null class)
-                      (if *m4-wrap-stack*
-                          (progn
-                            (lexer-unread-sequence lexer (apply #'concatenate 'string *m4-wrap-stack*))
-                            (let ((*m4-wrap-stack* (list)))
-                              (m4 rec)))
-                        (apply #'concatenate 'string (nreverse rec))))
-                     ((equal :quote-start class)
-                      (m4 (cons (parse-m4-quote lexer) rec)))
-                     ((equal :comment-start class)
-                      (m4 (cons (parse-m4-comment lexer image) rec)))
-                     ((equal :macro-name class)
-                      (m4 (cons (parse-m4-macro lexer image) rec)))
-                     ((equal :macro-token class)
-                      (m4 (cons (if (macro-token-p image)
-                                    (string (macro-token-name image))
-                                  "") rec)))
-                     (t (m4 (cons image rec)))))))
-    (m4 (list))))
+  (do* ((token (multiple-value-list (stream-read-token lexer))
+               (multiple-value-list (stream-read-token lexer)))
+        (class (car token) (car token))
+        (image (cadr token) (cadr token)))
+      ((null class)
+       (when *m4-wrap-stack*
+         (lexer-unread-sequence lexer (apply #'concatenate 'string *m4-wrap-stack*))
+         (let ((*m4-wrap-stack* (list)))
+           (parse-m4 lexer)))
+       (let ((*m4-diversion* 0))
+         (mapcar #'m4-out (flush-m4-diversions))))
+    (m4-out
+     (cond ((equal :quote-start class)
+            (parse-m4-quote lexer))
+           ((equal :comment-start class)
+            (parse-m4-comment lexer image))
+           ((equal :macro-name class)
+            (parse-m4-macro lexer image))
+           ((equal :macro-token class)
+            (if (macro-token-p image)
+                (string (macro-token-name image))
+              ""))
+           (t image)))))
 
-(defun process-m4 (stream &key (include-path (list)) (prepend-include-path (list)))
+(defun process-m4 (input-stream output-stream &key (include-path (list)) (prepend-include-path (list)))
   (let* ((*m4-quote-start* "`")
          (*m4-quote-end* "'")
          (*m4-comment-start* "#")
@@ -183,9 +189,9 @@
          (*m4-wrap-stack* (list))
          (*m4-include-path* (append (reverse prepend-include-path) (list ".") include-path))
          (*m4-diversion* 0)
-         (*m4-diversion-table* (make-hash-table))
+         (*m4-diversion-table* (make-m4-diversion-table output-stream))
          (lexer (make-instance 'm4-input-stream
-                               :stream stream
+                               :stream input-stream
                                :rules '((*m4-comment-start* . :comment-start)
                                         (*m4-comment-end* . :comment-end)
                                         (*m4-macro-name* . :macro-name)
