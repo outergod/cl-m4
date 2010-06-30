@@ -27,7 +27,7 @@ dnl(foo)
 #>m4>
 <- token m4
 
-#>m4>WARNING: excess arguments to builtin `dnl' ignored
+:error #>m4>WARNING: excess arguments to builtin `dnl' ignored
 
 m4))
 
@@ -41,7 +41,7 @@ dnl()
 #>m4>
 <- token m4
 
-#>m4>WARNING: excess arguments to builtin `dnl' ignored
+:error #>m4>WARNING: excess arguments to builtin `dnl' ignored
 
 m4))
 
