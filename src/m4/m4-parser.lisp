@@ -174,7 +174,7 @@
                      (t (m4 (cons image rec)))))))
     (m4 (list))))
 
-(defun process-m4 (stream &optional (include-path (list)) (prepend-include-path (list)))
+(defun process-m4 (stream &key (include-path (list)) (prepend-include-path (list)))
   (let* ((*m4-quote-start* "`")
          (*m4-quote-end* "'")
          (*m4-comment-start* "#")
