@@ -289,7 +289,7 @@
                  (or (some #'(lambda (include-path)
                                  (prog1 nil (m4-include-file (merge-pathnames path include-path) path)))
                            *m4-include-path*)
-                     (m4-include-file (merge-pathnames path (car *m4-include-path*)) path)))))))
+                     (m4-include-file (merge-pathnames path) path)))))))
 
   (defm4macro "include" (file) (:minimum-arguments 1)
     (m4-include file #'warn))
