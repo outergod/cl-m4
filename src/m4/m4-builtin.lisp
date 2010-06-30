@@ -149,6 +149,39 @@
   `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib* :key #'copy-array)))
      ,@body))
 
+(defun make-m4-diversion-table (stream)
+  (let ((table (make-hash-table)))
+    (prog1 table (setf (gethash 0 table) stream))))
+
+(defun m4-diversion (&optional number)
+  (gethash (or number *m4-diversion*) *m4-diversion-table*))
+
+(defmacro with-m4-diversion-stream ((var &optional number) &body body)
+  (let ((diversion (gensym)))
+    `(let ((,diversion (or ,number *m4-diversion*)))
+       (cond ((zerop ,diversion)
+              (let ((,var (m4-diversion 0)))
+                ,@body))
+             ((minusp ,diversion)
+              (with-open-file (,var "/dev/null" :direction :output :if-exists :append) ; TODO portability?
+                ,@body))
+             (t (with-output-to-string (,var (m4-diversion ,diversion))
+                  ,@body))))))
+
+(defun set-m4-diversion (number)
+  (or (gethash number *m4-diversion-table*)
+      (setf (gethash number *m4-diversion-table*)
+            (make-array 0 :element-type 'character :adjustable t :fill-pointer 0))))
+
+(defun flush-m4-diversions (&rest diversions)
+  (flet ((flush (diversion)
+           (if (or (= *m4-diversion* diversion) ; "Attempts to undivert the current diversion are silently ignored"
+                   (zerop diversion)) ""
+             (prog1 (or (m4-diversion diversion) "")
+               (remhash diversion *m4-diversion-table*)))))
+    (mapcar #'flush (or diversions
+                        (sort (alexandria:hash-table-keys *m4-diversion-table*) #'<)))))
+
 
 (defm4macro "define" (name &optional (expansion "")) (:minimum-arguments 1)
   (prog1 ""
@@ -295,7 +328,34 @@
     (m4-include file #'warn))
 
   (defm4macro "sinclude" (file) (:minimum-arguments 1)
-    (m4-include file #'identity)))
+    (m4-include file #'identity))
 
-;; (defm4macro "divert" (&optional (number 0)) (:arguments-only nil)
-;  ...)
+  (defm4macro "undivert" (&rest diversions) (:arguments-only nil)
+    (apply #'concatenate 'string
+           (if diversions
+               (mapcar #'(lambda (diversion)
+                           (handler-case
+                               (let ((parsed-number (if (string= "" diversion)
+                                                        0 ; "Undiverting the empty string is the same as specifying diversion 0"
+                                                      (parse-integer diversion :junk-allowed nil))))
+                                 (car (flush-m4-diversions parsed-number)))
+                             (condition ()
+                               (handler-case (m4-include diversion #'warn)
+                                 (macro-invocation-condition (condition)
+                                   (macro-invocation-result condition))))))
+                       diversions)
+             (flush-m4-diversions)))))
+
+(defm4macro "divert" (&optional (number "0")) (:arguments-only nil)
+  (prog1 ""
+    (handler-case
+     (let ((parsed-number (parse-integer number :junk-allowed nil)))
+       (unless (minusp parsed-number)
+         (set-m4-diversion parsed-number))
+       (setq *m4-diversion* parsed-number))
+     (condition ()
+       (warn "non-numeric argument to builtin `divert'")))))
+
+(defm4macro "divnum" () (:arguments-only nil)
+  (write-to-string *m4-diversion*)) ; What happens if changeword is enabled and integer-only macro
+                                    ; names have been allowed??
