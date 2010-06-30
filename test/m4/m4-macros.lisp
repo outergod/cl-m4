@@ -1020,3 +1020,295 @@ Include file end
 <<
 m4
 :include-path (list (merge-pathnames "fixtures/" *cwd*))))
+
+
+; depends: divert
+(deftest gnu-m4-10.1-1 ()
+  (m4-test
+#>m4>
+divert(`1')
+This text is diverted.
+divert
+This text is not diverted.
+m4
+
+#>m4>
+
+This text is not diverted.
+
+This text is diverted.
+m4))
+
+
+; depends: define, divert, m4wrap
+(deftest gnu-m4-10.1-2 ()
+  (m4-test
+#>m4eof>
+define(`text', `TEXT')
+divert(`1')`diverted text.'
+divert
+m4wrap(`Wrapped text precedes ')
+m4eof
+
+#>m4>
+
+
+
+Wrapped TEXT precedes diverted text.
+m4))
+
+
+; depends: define, divert
+(deftest gnu-m4-10.1-3 ()
+  (m4-test
+#>m4>
+divert(`-1')
+define(`foo', `Macro `foo'.')
+define(`bar', `Macro `bar'.')
+divert
+m4
+
+#>m4>
+
+m4))
+
+
+;; ; TODO eval
+;; ; depends: divert, eval
+;; (deftest gnu-m4-10.1-4 ()
+;;   (m4-test
+;; #>m4>
+;; divert(eval(`1<<28'))world
+;; divert(`2')hello
+;; m4
+
+;; #>m4>
+;; hello
+;; world
+;; m4))
+
+
+; depends: define, divert, ifelse, builtin, $#, $@, $\d
+(deftest gnu-m4-10.1-5 ()
+  (m4-test
+#>m4>
+We decided to divert the stream for irrigation.
+define(`divert', `ifelse(`$#', `0', ``$0'', `builtin(`$0', $@)')')
+divert(`-1')
+Ignored text.
+divert(`0')
+We decided to divert the stream for irrigation.
+m4
+
+#>m4>
+We decided to  the stream for irrigation.
+
+
+We decided to divert the stream for irrigation.
+m4))
+
+
+; depends: divert, undivert
+(deftest gnu-m4-10.2-1 ()
+  (m4-test
+#>m4>
+divert(`1')
+This text is diverted.
+divert
+This text is not diverted.
+undivert(`1')
+m4
+
+#>m4>
+
+This text is not diverted.
+
+This text is diverted.
+
+m4))
+
+
+; depends: divert, undivert
+(deftest gnu-m4-10.2-2 ()
+  (m4-test
+#>m4>
+divert(`1')diverted text
+divert
+undivert()
+undivert(`0')
+undivert
+divert(`1')more
+divert(`2')undivert(`1')diverted text`'divert
+undivert(`1')
+undivert(`2')
+m4
+
+#>m4>
+
+
+
+diverted text
+
+
+
+more
+diverted text
+m4))
+
+
+; depends: divert, undivert
+(deftest gnu-m4-10.2-3 ()
+  (m4-test
+#>m4>
+divert(`1')
+This text is diverted first.
+divert(`0')undivert(`1')dnl
+undivert(`1')
+divert(`1')
+This text is also diverted but not appended.
+divert(`0')undivert(`1')dnl
+m4
+
+#>m4>
+
+This text is diverted first.
+
+
+This text is also diverted but not appended.
+m4))
+
+
+; depends: divert, undivert, dnl
+(deftest gnu-m4-10.2-4 ()
+  (m4-test
+#>m4>
+divert(`1')one
+divert(`2')two
+divert(`3')three
+divert(`2')undivert`'dnl
+divert`'undivert`'dnl
+m4
+
+#>m4>
+two
+one
+three
+m4))
+
+
+; depends: define, undivert, include
+(deftest gnu-m4-10.2-5 ()
+  (m4-test
+#>m4>
+define(`bar', `BAR')
+undivert(`foo')
+include(`foo')
+m4
+
+#>m4>
+
+bar
+
+BAR
+
+m4
+
+:include-path (list (merge-pathnames "fixtures/" *cwd*))))
+
+
+; depends: divert, undivert, dnl
+(deftest gnu-m4-10.2-6 ()
+  (m4-test
+#>m4>
+divert(`1')diversion one
+divert(`2')undivert(`foo')dnl
+divert(`3')diversion three
+divert`'dnl
+undivert(`1', `2', `foo', `3')dnl
+m4
+
+#>m4>
+diversion one
+bar
+bar
+diversion three
+m4
+
+:include-path (list (merge-pathnames "fixtures/" *cwd*))))
+
+
+; depends: divert, divnum
+(deftest gnu-m4-10.3 ()
+  (m4-test
+#>m4>
+Initial divnum
+divert(`1')
+Diversion one: divnum
+divert(`2')
+Diversion two: divnum
+m4
+
+#>m4>
+Initial 0
+
+Diversion one: 1
+
+Diversion two: 2
+m4))
+
+
+; depends: divert, undivert
+(deftest gnu-m4-10.4 ()
+  (m4-test
+#>m4>
+divert(`1')
+Diversion one: divnum
+divert(`2')
+Diversion two: divnum
+divert(`-1')
+undivert
+m4
+
+#>m4>
+m4))
+
+
+; depends: define, pushdef, divnum, divert, undivert, popdef, $@
+(deftest composite-cleardivert ()
+  (m4-test
+#>m4>
+define(`cleardivert',
+`pushdef(`_n', divnum)divert(`-1')undivert($@)divert(_n)popdef(`_n')')dnl
+divert(`1')
+Diversion one: divnum
+divert(`2')
+Diversion two: divnum
+divert(`3')dnl
+Diversion three: divnum
+cleardivert(1,2)dnl
+m4
+
+#>m4>
+Diversion three: 3
+m4))
+
+
+; depends: define, pushdef, divnum, divert, ifelse, undivert, popdef, $@
+(deftest composite-cleardivert-fixed ()
+  (m4-test
+#>m4>
+define(`cleardivert',
+  `pushdef(`_num', divnum)divert(`-1')ifelse(`$#', `0',
+    `undivert`'', `undivert($@)')divert(_num)popdef(`_num')')dnl
+divert(`1')
+Diversion one: divnum
+divert(`2')
+Diversion two: divnum
+divert(`3')
+Diversion three: divnum
+cleardivert`'dnl
+m4
+
+#>m4>
+m4))
+
