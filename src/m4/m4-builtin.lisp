@@ -66,6 +66,9 @@
 (defvar *m4-diversion*)
 (defvar *m4-diversion-table*)
 
+;; (defun m4-warn (datum)
+;;   (princ datum *))
+
 (defun m4-quote-string (string)
   (concatenate 'string
                (unquote-regexp *m4-quote-start*)
@@ -359,3 +362,40 @@
 (defm4macro "divnum" () (:arguments-only nil)
   (write-to-string *m4-diversion*)) ; What happens if changeword is enabled and integer-only macro
                                     ; names have been allowed??
+
+(defm4macro "len" (string) (:minimum-arguments 1)
+  (write-to-string (length string)))
+
+(defm4macro "index" (string &optional substring) (:minimum-arguments 1)
+  (if substring
+      (write-to-string (or (search substring string) -1))
+    (prog1 "0" (warn "too few arguments to builtin `index'"))))
+
+;; TODO regexp
+
+(defm4macro "substr" (string &optional from length) (:minimum-arguments 1)
+  (if from
+      (flet ((string-or-0 (string)
+               (if (string= "" string)
+                   (prog1 "0"
+                     (princ "empty string treated as 0 in builtin `substr'" *error-output*))
+                 string)))
+        (handler-case
+         (let* ((start (parse-integer (string-or-0 from) :junk-allowed nil))
+                (parsed-length (and length
+                                    (parse-integer (string-or-0 length) :junk-allowed nil)))
+                (end (if (or (not parsed-length)
+                             (> (+ start parsed-length) (length string)))
+                         (length string)
+                       (+ start parsed-length))))
+           (if (< -1 start end)
+               (macro-return (subseq string start end))
+             ""))
+         (macro-invocation-condition (condition)
+           (error condition))
+         (condition ()
+           (warn "non-numeric argument to builtin `substr'")
+           "")))
+    (progn
+      (warn "too few arguments to builtin `substr'")
+      (macro-return string))))

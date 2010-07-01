@@ -1312,3 +1312,83 @@ m4
 #>m4>
 m4))
 
+
+; depends: len
+(deftest gnu-m4-11.1 ()
+  (m4-test
+#>m4>
+len()
+len(`abcdef')
+m4
+
+#>m4>
+0
+6
+m4))
+
+
+; depends: index
+(deftest gnu-m4-11.2-1 ()
+  (m4-test
+#>m4>
+index(`gnus, gnats, and armadillos', `nat')
+index(`gnus, gnats, and armadillos', `dag')
+m4
+
+#>m4>
+7
+-1
+m4))
+
+
+; depends: index
+(deftest gnu-m4-11.2-2 ()
+  (m4-test
+#>m4>
+index(`abc')
+index(`abc', `')
+index(`abc', `b')
+m4
+
+#>m4>
+0
+0
+1
+m4
+
+:error #>m4>WARNING: too few arguments to builtin `index'
+m4))
+
+
+; depends: substr
+(deftest gnu-m4-11.4-1 ()
+  (m4-test
+#>m4>
+substr(`gnus, gnats, and armadillos', `6')
+substr(`gnus, gnats, and armadillos', `6', `5')
+m4
+
+#>m4>
+gnats, and armadillos
+gnats
+m4))
+
+
+; depends: substr
+(deftest gnu-m4-11.4-2 ()
+  (m4-test
+#>m4>
+substr(`abc')
+substr(`abc',)
+m4
+
+#>m4>
+abc
+abc
+m4
+
+:error #>m4>WARNING: too few arguments to builtin `substr'
+
+WARNING: empty string treated as 0 in builtin `substr'
+
+m4))
