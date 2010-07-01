@@ -65,9 +65,11 @@
 (defvar *m4-include-path*)
 (defvar *m4-diversion*)
 (defvar *m4-diversion-table*)
+(defvar *m4-parse-row*)
+(defvar *m4-parse-column*)
 
-;; (defun m4-warn (datum)
-;;   (princ datum *))
+(defun m4-warn (datum)
+  (format *error-output* "m4:~a:~a: ~a~%" *m4-parse-row* *m4-parse-column* datum))
 
 (defun m4-quote-string (string)
   (concatenate 'string
@@ -106,14 +108,14 @@
                                          ((and ,arguments-only (not ,internal-call) (null ,macro-args)) ; most macros are only recognized with parameters
                                           ,name)
                                          ((< (length ,macro-args) ,minimum-arguments)
-                                          (warn (format nil "too few arguments to builtin `~a'~%" ,name))
+                                          (m4-warn (format nil "too few arguments to builtin `~a'" ,name))
                                           "")
                                          (t ,(if (member '&rest args)
                                                  `(destructuring-bind ,args ,macro-args
                                                     ,@body)
                                                `(destructuring-bind (,@args &rest ,ignored-rest) ,macro-args
                                                   (when ,ignored-rest
-                                                    (warn (format nil "excess arguments to builtin `~a' ignored~%" ,name)))
+                                                    (m4-warn (format nil "excess arguments to builtin `~a' ignored" ,name)))
                                                   ,@body))))))))))
 
 (defun defm4runtimemacro (name expansion &optional (replace t))
@@ -220,7 +222,7 @@
 (defm4macro "indir" (name &rest args) (:minimum-arguments 1)
   (let ((macro (m4-macro name)))
     (cond ((null macro)
-           (warn (format nil "undefined macro `~a'~%" name))
+           (m4-warn (format nil "undefined macro `~a'" name))
            "")
           ((null args)
            (funcall macro t))
@@ -229,7 +231,7 @@
 (defm4macro "builtin" (name &rest args) (:minimum-arguments 1)
   (let ((macro (m4-macro name t)))
     (cond ((null macro)
-           (warn (format nil "undefined builtin `~a'~%" name))
+           (m4-warn (format nil "undefined builtin `~a'" name))
            "")
           ((null args)
            (funcall macro t))
@@ -246,7 +248,7 @@
              (cond ((string= string-1 string-2)
                     (macro-return then))
                    ((= 2 (list-length else))
-                    (warn "excess arguments to builtin `ifelse' ignored~%")
+                    (m4-warn "excess arguments to builtin `ifelse' ignored")
                     (macro-return (car else)))
                    ((> (list-length else) 1)
                     (apply #'ifelse else))
@@ -255,13 +257,13 @@
       (cond ((= 1 num-args) "") ; "Used with only one argument, the ifelse
                                 ;  simply discards it and produces no output"
             ((= 2 num-args)
-             (warn "too few arguments to builtin `ifelse'~%")
+             (m4-warn "too few arguments to builtin `ifelse'")
              "")
             ((< num-args 5)
              (ifelse (car args) (cadr args) (caddr args) (or (cadddr args) "")))
             ((= 5 num-args) ; "If called with three or four arguments...A final
                             ;  fifth argument is ignored, after triggering a warning"
-             (warn "excess arguments to builtin `ifelse' ignored~%")
+             (m4-warn "excess arguments to builtin `ifelse' ignored")
              (ifelse (car args) (cadr args) (caddr args) (cadddr args)))
             (t (apply #'ifelse (car args) (cadr args) (caddr args) (cdddr args)))))))
 
@@ -275,7 +277,7 @@
                                       (if macro
                                           (format nil "~a:~a~a" name #\tab (funcall macro :definition))
                                         (progn
-                                          (warn (format nil "undefined macro `~a'" name))
+                                          (m4-warn (format nil "undefined macro `~a'" name))
                                           ""))))
                                 (or args
                                     (alexandria:hash-table-keys *m4-runtime-lib*)))
@@ -357,7 +359,7 @@
          (set-m4-diversion parsed-number))
        (setq *m4-diversion* parsed-number))
      (condition ()
-       (warn "non-numeric argument to builtin `divert'")))))
+       (m4-warn "non-numeric argument to builtin `divert'")))))
 
 (defm4macro "divnum" () (:arguments-only nil)
   (write-to-string *m4-diversion*)) ; What happens if changeword is enabled and integer-only macro
@@ -369,7 +371,7 @@
 (defm4macro "index" (string &optional substring) (:minimum-arguments 1)
   (if substring
       (write-to-string (or (search substring string) -1))
-    (prog1 "0" (warn "too few arguments to builtin `index'"))))
+    (prog1 "0" (m4-warn "too few arguments to builtin `index'"))))
 
 ;; TODO regexp
 
@@ -394,8 +396,8 @@
          (macro-invocation-condition (condition)
            (error condition))
          (condition ()
-           (warn "non-numeric argument to builtin `substr'")
+           (m4-warn "non-numeric argument to builtin `substr'")
            "")))
     (progn
-      (warn "too few arguments to builtin `substr'")
+      (m4-warn "too few arguments to builtin `substr'")
       (macro-return string))))
