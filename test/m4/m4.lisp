@@ -17,7 +17,8 @@
 (in-package :evol)
 
 (shadowing-import
- '(m4-macro with-m4-lib *m4-lib* *m4-runtime-lib*)
+ '(m4-macro with-m4-lib *m4-lib* *m4-runtime-lib*
+  *m4-parse-row* *m4-parse-column*)
  (find-package :evol-test))
 
 (in-package :evol-test)
