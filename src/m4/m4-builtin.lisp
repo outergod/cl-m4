@@ -69,7 +69,13 @@
 (defvar *m4-parse-column*)
 
 (defun m4-warn (datum)
-  (format *error-output* "m4:~a:~a: ~a~%" *m4-parse-row* *m4-parse-column* datum))
+  (flet ((boundp-or-? (var)
+           (if (boundp var)
+               (eval var)
+             "?")))
+    (format *error-output* "cl-m4:~a:~a: ~a~%" (boundp-or-? '*m4-parse-row*)
+                                               (boundp-or-? '*m4-parse-column*)
+                                               datum)))
 
 (defun m4-quote-string (string)
   (concatenate 'string
@@ -330,7 +336,7 @@
                      (m4-include-file (merge-pathnames path) path)))))))
 
   (defm4macro "include" (file) (:minimum-arguments 1)
-    (m4-include file #'warn))
+    (m4-include file #'m4-warn))
 
   (defm4macro "sinclude" (file) (:minimum-arguments 1)
     (m4-include file #'identity))
@@ -345,7 +351,7 @@
                                                       (parse-integer diversion :junk-allowed nil))))
                                  (car (flush-m4-diversions parsed-number)))
                              (condition ()
-                               (handler-case (m4-include diversion #'warn)
+                               (handler-case (m4-include diversion #'m4-warn)
                                  (macro-invocation-condition (condition)
                                    (macro-invocation-result condition))))))
                        diversions)
@@ -380,7 +386,7 @@
       (flet ((string-or-0 (string)
                (if (string= "" string)
                    (prog1 "0"
-                     (princ "empty string treated as 0 in builtin `substr'" *error-output*))
+                     (m4-warn "empty string treated as 0 in builtin `substr'"))
                  string)))
         (handler-case
          (let* ((start (parse-integer (string-or-0 from) :junk-allowed nil))

@@ -18,7 +18,7 @@
 
 (in-suite m4)
 
-(eval-when (:compile-toplevel)
+(eval-when (:compile-toplevel :execute)
   (defparameter *cwd* (make-pathname
                        :directory (pathname-directory *compile-file-truename*))))
 
@@ -266,9 +266,8 @@ m4
 
 m4
 
-:error #>m4>WARNING: undefined macro `f'
-
-m4))
+:error #>m4eof>cl-m4:1:92: undefined macro `f'
+m4eof))
 
 
 ; TODO divnum
@@ -353,20 +352,12 @@ builtin
 
 m4
 
-:error #>m4>WARNING: undefined builtin `'
-
-
-WARNING: too few arguments to builtin `builtin'
-
-
-WARNING: undefined builtin `'
-
-
-WARNING: undefined builtin ``'
+:error #>m4eof>cl-m4:1:18: undefined builtin `'
+cl-m4:1:37: too few arguments to builtin `builtin'
+cl-m4:1:57: undefined builtin `'
+cl-m4:2:15: undefined builtin ``'
              '
-
-m4))
-
+m4eof))
 
 
 ; depends: ifdef, define
@@ -386,9 +377,8 @@ foo is defined
 no
 m4
 
-:error #>m4>WARNING: excess arguments to builtin `ifdef' ignored
-
-m4))
+:error #>m4eof>cl-m4:1:186: excess arguments to builtin `ifdef' ignored
+m4eof))
 
 
 ; depends: ifelse
@@ -404,9 +394,8 @@ m4
 
 m4
 
-:error #>m4>WARNING: too few arguments to builtin `ifelse'
-
-m4))
+:error #>m4eof>cl-m4:1:45: too few arguments to builtin `ifelse'
+m4eof))
 
 
 ; depends: ifelse, define
@@ -463,12 +452,9 @@ seventh
 7
 m4
 
-:error #>m4>WARNING: excess arguments to builtin `ifelse' ignored
-
-
-WARNING: excess arguments to builtin `ifelse' ignored
-
-m4))
+:error #>m4eof>cl-m4:1:46: excess arguments to builtin `ifelse' ignored
+cl-m4:1:224: excess arguments to builtin `ifelse' ignored
+m4eof))
 
 
 ; depends: shift
@@ -584,11 +570,10 @@ f2
 f1
 m4
 
-:error #>m4>f:	`$0'1
+:error #>m4eof>f:	`$0'1
+cl-m4:1:96: undefined macro `f'
 
-WARNING: undefined macro `f'
-
-m4))
+m4eof))
 
 
 ;; TODO traceon, traceoff, debugmode, debugfile
@@ -620,9 +605,8 @@ m4
 See how foo was defined, like this?
 m4
 
-:error #>m4>WARNING: excess arguments to builtin `dnl' ignored
-
-m4))
+:error #>m4eof>cl-m4:2:27: excess arguments to builtin `dnl' ignored
+m4eof))
 
 
 ;; ; TODO m4wrap
@@ -980,10 +964,9 @@ m4
 
 m4
 
-:error #>m4>WARNING: cannot open `none': No such file or directory
-
-WARNING: cannot open `': No such file or directory
-m4))
+:error #>m4eof>cl-m4:1:16: cannot open `none': No such file or directory
+cl-m4:1:26: cannot open `': No such file or directory
+m4eof))
 
 
 ; depends: define, include
@@ -1356,8 +1339,8 @@ m4
 1
 m4
 
-:error #>m4>WARNING: too few arguments to builtin `index'
-m4))
+:error #>m4eof>cl-m4:1:13: too few arguments to builtin `index'
+m4eof))
 
 
 ; depends: substr
@@ -1387,8 +1370,6 @@ abc
 abc
 m4
 
-:error #>m4>WARNING: too few arguments to builtin `substr'
-
-WARNING: empty string treated as 0 in builtin `substr'
-
-m4))
+:error #>m4eof>cl-m4:1:14: too few arguments to builtin `substr'
+cl-m4:1:29: empty string treated as 0 in builtin `substr'
+m4eof))
