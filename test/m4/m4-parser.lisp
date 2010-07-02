@@ -27,9 +27,8 @@ dnl(foo)
 #>m4>
 <- token m4
 
-:error #>m4>WARNING: excess arguments to builtin `dnl' ignored
-
-m4))
+:error #>m4eof>cl-m4:1:9: excess arguments to builtin `dnl' ignored
+m4eof))
 
 
 (deftest dnl-with-empty-args ()
@@ -41,9 +40,8 @@ dnl()
 #>m4>
 <- token m4
 
-:error #>m4>WARNING: excess arguments to builtin `dnl' ignored
-
-m4))
+:error #>m4eof>cl-m4:1:6: excess arguments to builtin `dnl' ignored
+m4eof))
 
 
 (deftest dnl-quote-start ()

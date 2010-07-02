@@ -17,8 +17,7 @@
 (in-package :evol)
 
 (shadowing-import
- '(m4-macro with-m4-lib *m4-lib* *m4-runtime-lib*
-  *m4-parse-row* *m4-parse-column*)
+ '(m4-macro with-m4-lib *m4-lib* *m4-parse-row* *m4-parse-column*)
  (find-package :evol-test))
 
 (in-package :evol-test)
@@ -28,6 +27,8 @@
 (in-suite m4)
 
 (set-dispatch-macro-character #\# #\> #'evol:read-heredoc)
+
+(defvar *m4-runtime-lib*)
 
 (deftest test-m4-macro-exists (macro)
   (with-m4-lib

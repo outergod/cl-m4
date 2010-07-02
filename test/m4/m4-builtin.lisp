@@ -26,11 +26,11 @@
 
 (defm4test macro-dnl-with-args "dnl" ("foo")
   :signal macro-dnl-invocation-condition
-  :error (format nil "WARNING: excess arguments to builtin `dnl' ignored~%~%"))
+  :error (format nil "cl-m4:?:?: excess arguments to builtin `dnl' ignored~%"))
 
 (defm4test macro-dnl-with-empty-args "dnl" (nil)
   :signal macro-dnl-invocation-condition
-  :error (format nil "WARNING: excess arguments to builtin `dnl' ignored~%~%"))
+  :error (format nil "cl-m4:?:?: excess arguments to builtin `dnl' ignored~%"))
 
 (defm4test macro-defn-no-args "defn" ()
   :signal macro-defn-invocation-condition)
