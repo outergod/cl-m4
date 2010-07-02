@@ -407,3 +407,6 @@
     (progn
       (m4-warn "too few arguments to builtin `substr'")
       (macro-return string))))
+
+;; (defm4macro "translit" (string chars &optional replacement) (:minimum-arguments 1)
+;;   )

@@ -1373,3 +1373,38 @@ m4
 :error #>m4eof>cl-m4:1:14: too few arguments to builtin `substr'
 cl-m4:1:29: empty string treated as 0 in builtin `substr'
 m4eof))
+
+
+; depends: translit
+(deftest gnu-m4-11.5-1 ()
+  (m4-test
+#>m4>
+translit(`GNUs not Unix', `A-Z')
+translit(`GNUs not Unix', `a-z', `A-Z')
+translit(`GNUs not Unix', `A-Z', `z-a')
+translit(`+,-12345', `+--1-5', `<;>a-c-a')
+translit(`abcdef', `aabdef', `bcged')
+m4
+
+#>m4>
+s not nix
+GNUS NOT UNIX
+tmfs not fnix
+<;>abcba
+bgced
+m4))
+
+
+; depends: translit
+(deftest gnu-m4-11.5-2 ()
+  (m4-test
+#>m4>
+translit(`abc')
+m4
+
+#>m4>
+abc
+m4
+
+:error #>m4eof>cl-m4:?:?: too few arguments to builtin `translit'
+m4eof))
