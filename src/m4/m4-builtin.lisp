@@ -40,6 +40,17 @@
           ""
         (acc (list) (car char-list) (cdr char-list))))))
 
+(defun translate (string charbag &optional (replacebag ""))
+  (apply #'concatenate 'string
+         (mapcar #'(lambda (char)
+                     (let ((pos (position char charbag)))
+                       (if pos
+                           (if (< pos (length replacebag))
+                               (string (schar replacebag pos))
+                             "")
+                         (string char))))
+                 (coerce string 'list))))
+
 
 (defstruct (macro-token (:constructor make-macro-token (m4macro name)))
   m4macro name)
