@@ -18,9 +18,9 @@
 
 (in-suite m4)
 
-(eval-when (:compile-toplevel :execute)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *cwd* (make-pathname
-                       :directory (pathname-directory *compile-file-truename*))))
+                       :directory (pathname-directory (or *compile-file-truename* "")))))
 
 ; TODO format
 ; depends: define, defn, format
