@@ -28,7 +28,7 @@
 
 (set-dispatch-macro-character #\# #\> #'evol:read-heredoc)
 
-(eval-when (:compile-toplevel :execute)
+(eval-when (:compile-toplevel :execute :load-toplevel)
   (defvar *m4-runtime-lib*))
 
 (deftest test-m4-macro-exists (macro)
