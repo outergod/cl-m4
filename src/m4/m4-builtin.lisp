@@ -16,6 +16,25 @@
 
 (in-package :evol)
 
+;;; M4 builtin macros and their helpers ahead.
+
+
+;; conditions & structs
+(defstruct (macro-token (:constructor make-macro-token (m4macro name)))
+  m4macro name)
+
+(define-condition macro-invocation-condition (error)
+  ((result :initarg :result
+           :reader macro-invocation-result)))
+
+(define-condition macro-dnl-invocation-condition (error) ())
+
+(define-condition macro-defn-invocation-condition (error)
+  ((macros :initarg :macros
+           :reader macro-defn-invocation-result)))
+
+
+;; utilities
 (defun quote-regexp (string)
   (let ((quote-charbag "\\()^$[]{}*?.")
         (quoted-string (make-array (length string) :adjustable t :fill-pointer 0)))
@@ -52,19 +71,7 @@
                  (coerce string 'list))))
 
 
-(defstruct (macro-token (:constructor make-macro-token (m4macro name)))
-  m4macro name)
-
-(define-condition macro-invocation-condition (error)
-  ((result :initarg :result
-           :reader macro-invocation-result)))
-
-(define-condition macro-dnl-invocation-condition (error) ())
-
-(define-condition macro-defn-invocation-condition (error)
-  ((macros :initarg :macros
-           :reader macro-defn-invocation-result)))
-
+;; dynamic variables
 (defparameter *m4-lib* (make-hash-table :test #'equal))
 (defvar *m4-runtime-lib*)
 (defvar *m4-quote-start*)
@@ -79,6 +86,8 @@
 (defvar *m4-parse-row*)
 (defvar *m4-parse-column*)
 
+
+;; internal functions
 (defun m4-warn (datum)
   (flet ((boundp-or-? (var)
            (if (boundp var)
@@ -93,6 +102,24 @@
                (unquote-regexp *m4-quote-start*)
                string
                (unquote-regexp *m4-quote-end*)))
+
+(defun m4-regex-replace (template string registers)
+  (flet ((nth-match (index)
+           (if (< index (length registers))
+               (let ((range (svref registers index)))
+                 (if (>= (car range) 0) ; empty optional register groups are (-1 -1)
+                     (apply #'subseq string range)
+                   ""))
+             (prog1 ""
+               (m4-warn (format nil "sub-expression ~d not present" index))))))
+    (cl-ppcre:regex-replace-all "\\\\(.)" template
+                                (replace-with-region
+                                 #'(lambda (match)
+                                     (cond ((string= "\\" match) "\\")
+                                           ((string= "&"  match) (nth-match 0))
+                                           ((search match "0123456789")
+                                            (nth-match (parse-integer match :junk-allowed nil)))
+                                           (t match)))))))
 
 (defun pushm4macro (name fun &optional (replace t))
   (let ((stack (gethash name *m4-runtime-lib*)))
@@ -205,6 +232,7 @@
                         (sort (alexandria:hash-table-keys *m4-diversion-table*) #'<)))))
 
 
+;; m4 macro implementations
 (defm4macro "define" (name &optional (expansion "")) (:minimum-arguments 1)
   (prog1 ""
     (when (string/= "" name)
@@ -390,7 +418,28 @@
       (write-to-string (or (search substring string) -1))
     (prog1 "0" (m4-warn "too few arguments to builtin `index'"))))
 
-;; TODO regexp
+(defm4macro "regexp" (string &optional regexp replacement) (:minimum-arguments 1)
+  (if regexp
+      (handler-case
+       (multiple-value-bind (startpos registers)
+           (regex-search regexp string)
+         (if startpos
+             (if replacement
+                 (let ((replace-result (m4-regex-replace replacement string registers)))
+                   (if (string= "\\" (subseq replace-result (1- (length replace-result))))
+                       (prog1 (subseq replace-result 0 (1- (length replace-result)))
+                         (m4-warn "trailing \\ ignored in replacement"))
+                     replace-result))
+               (write-to-string startpos))
+           (if replacement "" "-1")))
+       (regex-compilation-failure (condition)
+         (m4-warn (format nil "bad regular expression: `~a': ~a"
+                          regexp condition))
+         "0")
+       (regex-internal-error ()
+         (m4-warn (format nil "error matching regular expression `~a'" regexp))
+         "0"))
+    (prog1 "0" (m4-warn "too few arguments to builtin `regexp'"))))
 
 (defm4macro "substr" (string &optional from length) (:minimum-arguments 1)
   (if from
