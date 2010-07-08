@@ -1466,5 +1466,5 @@ m4
 abc
 m4
 
-:error #>m4eof>cl-m4:?:?: too few arguments to builtin `translit'
+:error #>m4eof>cl-m4:1:16: too few arguments to builtin `translit'
 m4eof))
