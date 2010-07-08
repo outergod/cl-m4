@@ -18,7 +18,7 @@
 
 (in-suite m4)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
+(eval-when (:compile-toplevel)
   (defparameter *cwd* (make-pathname
                        :directory (pathname-directory (or *compile-file-truename* "")))))
 
