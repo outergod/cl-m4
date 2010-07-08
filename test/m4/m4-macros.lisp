@@ -1343,6 +1343,66 @@ m4
 m4eof))
 
 
+; depends: regexp
+(deftest gnu-m4-11.3-1 ()
+  (m4-test
+#>m4>
+regexp(`GNUs not Unix', `\<[a-z]\w+')
+regexp(`GNUs not Unix', `\<Q\w*')
+regexp(`GNUs not Unix', `\w\(\w+\)$', `*** \& *** \1 ***')
+regexp(`GNUs not Unix', `\<Q\w*', `*** \& *** \1 ***')
+m4
+
+#>m4>
+5
+-1
+*** Unix *** nix ***
+
+m4))
+
+
+; depends: regexp
+(deftest gnu-m4-11.3-2 ()
+  (m4-test
+#>m4>
+regexp(`abc', `\(b\)', `\\\10\a')
+regexp(`abc', `b', `\1\')
+regexp(`abc', `\(\(d\)?\)\(c\)', `\1\2\3\4\5\6')
+m4
+
+#>m4>
+\b0a
+
+c
+m4
+
+:error #>m4eof>cl-m4:1:60: sub-expression 1 not present
+cl-m4:1:60: trailing \ ignored in replacement
+cl-m4:1:109: sub-expression 4 not present
+cl-m4:1:109: sub-expression 5 not present
+cl-m4:1:109: sub-expression 6 not present
+m4eof))
+
+
+; depends: regexp
+(deftest gnu-m4-11.3-3 ()
+  (m4-test
+#>m4>
+regexp(`abc')
+regexp(`abc', `')
+regexp(`abc', `', `\\def')
+m4
+
+#>m4>
+0
+0
+\def
+m4
+
+:error #>m4eof>cl-m4:1:14: too few arguments to builtin `regexp'
+m4eof))
+
+
 ; depends: substr
 (deftest gnu-m4-11.4-1 ()
   (m4-test
