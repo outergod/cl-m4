@@ -59,16 +59,31 @@
           ""
         (acc (list) (car char-list) (cdr char-list))))))
 
+(defun expand-ascii-ranges (string)
+  (cl-ppcre:regex-replace-all "(.-.)" string
+                              (replace-with-region
+                               #'(lambda (match)
+                                   (let* ((start (char-code (schar match 0)))
+                                          (end   (char-code (schar match 2)))
+                                          (step  (if (>= end start) 1 -1))
+                                          (bag (make-string (1+ (abs (- end start))))))
+                                     (do* ((index 0 (+ step index))
+                                           (char (code-char start) (code-char (+ index start))))
+                                         ((= (+ step end) (+ index start)) bag)
+                                       (setf (schar bag (abs index)) char)))))))
+
 (defun translate (string charbag &optional (replacebag ""))
-  (apply #'concatenate 'string
-         (mapcar #'(lambda (char)
-                     (let ((pos (position char charbag)))
-                       (if pos
-                           (if (< pos (length replacebag))
-                               (string (schar replacebag pos))
-                             "")
-                         (string char))))
-                 (coerce string 'list))))
+  (let ((charbag    (expand-ascii-ranges charbag))
+        (replacebag (expand-ascii-ranges replacebag)))
+    (apply #'concatenate 'string
+           (mapcar #'(lambda (char)
+                       (let ((pos (position char charbag)))
+                         (if pos
+                             (if (< pos (length replacebag))
+                                 (string (schar replacebag pos))
+                               "")
+                           (string char))))
+                   (coerce string 'list)))))
 
 
 ;; dynamic variables
@@ -468,5 +483,9 @@
       (m4-warn "too few arguments to builtin `substr'")
       (macro-return string))))
 
-;; (defm4macro "translit" (string chars &optional replacement) (:minimum-arguments 1)
-;;   )
+(defm4macro "translit" (string &optional chars replacement) (:minimum-arguments 1)
+  (if chars
+      (macro-return (translate string chars replacement))
+    (progn
+      (m4-warn "too few arguments to builtin `translit'")
+      (macro-return string))))
