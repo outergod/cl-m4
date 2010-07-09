@@ -33,13 +33,13 @@
 
 (defun split-merge (string-list split-token)
   (labels ((acc (rec string rest)
-                (let ((char (car rest)))
-                  (cond ((null char) (nreverse (cons string rec)))
-                        ((equal split-token (car rest))
-                         (acc (cons string rec) "" (cdr rest)))
-                        ((not (stringp char)) ; macro-token
-                         (acc (cons char rec) "" (cdr rest)))
-                        (t (acc rec (concatenate 'string string char) (cdr rest)))))))
+             (let ((token (car rest)))
+               (cond ((null token) (nreverse (cons string rec)))
+                     ((equal split-token token)
+                      (acc (cons string rec) "" (cdr rest)))
+                     ((not (stringp token)) ; macro-token; a separator MUST follow
+                      (acc rec token (cdr rest)))
+                     (t (acc rec (concatenate 'string string token) (cdr rest)))))))
           (acc (list) "" string-list)))
 
 (defun call-m4-macro (macro args lexer)
