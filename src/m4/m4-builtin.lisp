@@ -257,9 +257,11 @@
 
 ;; m4 macro implementations
 (defm4macro "define" (name &optional (expansion "")) (:minimum-arguments 1)
-  (prog1 ""
-    (when (string/= "" name)
-      (defm4runtimemacro name expansion))))
+  (if (stringp name)
+      (prog1 ""
+        (when (string/= "" name)
+          (defm4runtimemacro name expansion)))
+    (prog1 "" (m4-warn "define: invalid macro name ignored"))))
 
 (defm4macro "undefine" (&rest args) ()
   (prog1 ""
@@ -288,23 +290,27 @@
     (mapc #'popm4macro args)))
 
 (defm4macro "indir" (name &rest args) (:minimum-arguments 1)
-  (let ((macro (m4-macro name)))
-    (cond ((null macro)
-           (m4-warn (format nil "undefined macro `~a'" name))
-           "")
-          ((null args)
-           (funcall macro t))
-          (t (apply macro t args)))))
+  (if (stringp name)
+      (let ((macro (m4-macro name)))
+        (cond ((null macro)
+               (m4-warn (format nil "undefined macro `~a'" name))
+               "")
+              ((null args)
+               (funcall macro t))
+              (t (apply macro t args))))
+    (prog1 "" (m4-warn "indir: invalid macro name ignored"))))
 
 (defm4macro "builtin" (name &rest args) (:minimum-arguments 1)
-  (let ((macro (m4-macro name t)))
-    (cond ((null macro)
-           (m4-warn (format nil "undefined builtin `~a'" name))
-           "")
-          ((null args)
-           (funcall macro t))
-          (t (apply macro t args)))))
-
+  (if (stringp name)
+      (let ((macro (m4-macro name t)))
+        (cond ((null macro)
+               (m4-warn (format nil "undefined builtin `~a'" name))
+               "")
+              ((null args)
+               (funcall macro t))
+              (t (apply macro t args))))
+    (prog1 "" (m4-warn "builtin: invalid macro name ignored"))))
+  
 (defm4macro "ifdef" (name string-1 &optional (string-2 "")) (:minimum-arguments 2)
   (macro-return
    (if (m4-macro name)
@@ -420,14 +426,19 @@
              (flush-m4-diversions)))))
 
 (defm4macro "divert" (&optional (number "0")) (:arguments-only nil)
-  (prog1 ""
-    (handler-case
-     (let ((parsed-number (parse-integer number :junk-allowed nil)))
-       (unless (minusp parsed-number)
-         (set-m4-diversion parsed-number))
-       (setq *m4-diversion* parsed-number))
-     (condition ()
-       (m4-warn "non-numeric argument to builtin `divert'")))))
+  (flet ((set-diversion (string)
+           (handler-case
+            (let ((parsed-number (parse-integer string :junk-allowed nil)))
+              (unless (minusp parsed-number)
+                (set-m4-diversion parsed-number))
+              (setq *m4-diversion* parsed-number))
+            (condition ()
+              (m4-warn "non-numeric argument to builtin `divert'")))))
+    (prog1 ""
+      (set-diversion (if (or (not (stringp number))
+                             (string= "" number))
+                         (prog1 "0" (m4-warn "empty string treated as 0 in builtin `divert'"))
+                       number)))))
 
 (defm4macro "divnum" () (:arguments-only nil)
   (write-to-string *m4-diversion*)) ; What happens if changeword is enabled and integer-only macro
