@@ -162,7 +162,7 @@
           (vector-pop stack)
         (remhash name *m4-runtime-lib*)))))
 
-(defmacro defm4macro (name args (&key (arguments-only t) (minimum-arguments 0)) &body body)
+(defmacro defm4macro (name args (&key (arguments-only t) (minimum-arguments 0) (accept-macro-tokens nil)) &body body)
   (let ((macro-args (gensym))
         (ignored-rest (gensym))
         (internal-call (gensym)))
