@@ -270,34 +270,31 @@ m4
 m4eof))
 
 
-; TODO divnum
-;; ; depends: indir, defn, divnum, define
-;; (deftest gnu-m4-5.7-3 ()
-;;   (m4-test
-;; #>m4>
-;; indir(defn(`defn'), `divnum')
-;; indir(`define', defn(`defn'), `divnum')
-;; indir(`define', `foo', defn(`divnum'))
-;; foo
-;; indir(`divert', defn(`foo'))
-;; m4
+; depends: indir, defn, divnum, define
+(deftest gnu-m4-5.7-3 ()
+  (m4-test
+#>m4>
+indir(defn(`defn'), `divnum')
+indir(`define', defn(`defn'), `divnum')
+indir(`define', `foo', defn(`divnum'))
+foo
+indir(`divert', defn(`foo'))
+m4
 
-;; #>m4>
-
+#>m4>
 
 
-;; 0
 
-;; m4
+0
 
-;; :error #>m4>
-;; error-->m4:stdin:1: Warning: indir: invalid macro name ignored
-;; error-->m4:stdin:2: Warning: define: invalid macro name ignored
-;; error-->m4:stdin:5: empty string treated as 0 in builtin `divert'
-;; m4))
+m4
+
+:error #>m4eof>cl-m4:1:30: indir: invalid macro name ignored
+cl-m4:1:70: define: invalid macro name ignored
+cl-m4:1:142: empty string treated as 0 in builtin `divert'
+m4eof))
 
 
-; TODO divnum
 ; depends: pushdef, define, undefine, builtin, defn, divnum
 (deftest gnu-m4-5.8-1 ()
   (m4-test
@@ -306,8 +303,8 @@ pushdef(`define', `hidden')
 undefine(`undefine')
 define(`foo', `bar')
 foo
-dnl builtin(`define', `foo', defn(`divnum'))
-dnl foo
+builtin(`define', `foo', defn(`divnum'))
+foo
 builtin(`define', `foo', `BAR')
 foo
 undefine(`foo')
@@ -322,6 +319,8 @@ m4
 hidden
 foo
 
+0
+
 BAR
 undefine(foo)
 BAR
@@ -330,7 +329,6 @@ foo
 m4))
 
 
-; TODO index
 ; depends: builtin, indir, index
 (deftest gnu-m4-5.8-3 ()
   (m4-test
@@ -341,11 +339,12 @@ builtin(`builtin')
 builtin(`builtin',)
 builtin(`builtin', ``'
              ')
-dnl indir(`index')
+indir(`index')
 m4
 
 #>m4>
 builtin
+
 
 
 
@@ -357,6 +356,7 @@ cl-m4:1:37: too few arguments to builtin `builtin'
 cl-m4:1:57: undefined builtin `'
 cl-m4:2:15: undefined builtin ``'
              '
+cl-m4:2:30: too few arguments to builtin `index'
 m4eof))
 
 
@@ -609,22 +609,24 @@ m4
 m4eof))
 
 
-;; ; TODO m4wrap
-;; ; depends: m4wrap, define, dnl
-;; (deftest gnu-m4-8.1-3 ()
-;;   (m4-test
-;; #>m4>
-;; m4wrap(`m4wrap(`2 hi
-;; ')0 hi dnl 1 hi')
-;; define(`hi', `HI')m4
+;; TODO: dnl EOF without newline
+; depends: m4wrap, define, dnl
+(deftest gnu-m4-8.1-3 ()
+  (m4-test
+#>m4eof>
+m4wrap(`m4wrap(`2 hi
+')0 hi dnl 1 hi')
+define(`hi', `HI')
+m4eof
 
-;; #>m4>
-;; 0 HI 2 HI
-;; m4
+#>m4>
 
-;; #>m4>WARNING: end of file treated as newline
 
-;; m4))
+0 HI 2 HI
+m4
+
+:error #>m4eof>WARNING: end of file treated as newline
+m4eof))
 
 
 ; depends: define, changequote
