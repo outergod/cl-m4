@@ -38,7 +38,6 @@
 ; "For example, if foo is a macro,
 ;     foo(() (`(') `(')
 ; is a macro call, with one argument, whose value is ‘() (() (’"
-; depends: define, $\d
 (deftest gnu-m4-4.4-1 ()
   (m4-test
 #>m4>
@@ -51,10 +50,11 @@ m4
 
 [() (() (] []
 [() (() (] []
-m4))
+m4
+
+:depends (list "define")))
 
 
-; depends: define, $\d
 (deftest gnu-m4-4.4-2 ()
   (m4-test
 #>m4>
@@ -71,10 +71,11 @@ m4
 ACT ACT
 ACT, IVE ACT, IVE
 active active
-m4))
+m4
+
+:depends (list "define")))
 
 
-; depends: define, $\d
 (deftest composite-exch ()
   (m4-test
 #>m4>
@@ -89,10 +90,11 @@ m4
 arg2, arg1
 
 expansion text
-m4))
+m4
+
+:depends (list "define")))
 
 
-; depends: define, $#
 (deftest composite-nargs ()
   (m4-test
 #>m4>
@@ -116,7 +118,9 @@ m4
 1
 1
 3
-m4))
+m4
+
+:depends (list "define")))
 
 
 (deftest composite-nargs-underquoted ()
@@ -131,10 +135,11 @@ m4
 
 0)
 oops
-m4))
+m4
+
+:depends (list "define")))
 
 
-; depends: define, $\*, $\@
 (deftest composite-echo ()
   (m4-test
 #>m4>
@@ -153,13 +158,13 @@ correct,arg2,arg3 ,arg4
 
 
 arg1,arg2,arg3 ,arg4
-m4))
+m4
+
+:depends (list "define")))
 
 
 ; "Undefining a macro inside that macro's expansion is safe; the macro still
 ; expands to the definition that was in effect at the ‘(’"
-; depends: define, undefine, $\d
-; depends: define, undefine, $\d 
 (deftest gnu-m4-5.4 ()
   (m4-test
 #>m4>
@@ -170,10 +175,11 @@ f(`bye')m4
 #>m4>
 
 f:f:f:hello world
-f(bye)m4))
+f(bye)m4
+
+:depends (list "define" "undefine")))
 
 
-; depends: define, pushdef, popdef
 (deftest gnu-m4-5.6-1 ()
   (m4-test
 #>m4>
@@ -204,10 +210,11 @@ Expansion three.
 Expansion one.
 
 foo
-m4))
+m4
+
+:depends (list "define" "pushdef" "popdef")))
 
 
-; depends: define, undefine, pushdef
 (deftest gnu-m4-5.6-2 ()
   (m4-test
 #>m4>
@@ -230,10 +237,11 @@ Expansion two.
 Second expansion two.
 
 foo
-m4))
+m4
+
+:depends (list "define" "undefine" "pushdef")))
 
 
-; depends: define, indir
 (deftest gnu-m4-5.7-1 ()
   (m4-test
 #>m4>
@@ -246,10 +254,11 @@ m4
 
 $$internal$macro
 Internal macro (name $$internal$macro)
-m4))
+m4
+
+:depends (list "define" "indir")))
 
 
-; depends: define, undefine, indir
 (deftest gnu-m4-5.7-2 ()
   (m4-test
 #>m4>
@@ -267,10 +276,11 @@ m4
 m4
 
 :error #>m4eof>cl-m4:1:92: undefined macro `f'
-m4eof))
+m4eof
+
+:depends (list "define" "undefine" "indir")))
 
 
-; depends: indir, defn, divnum, define
 (deftest gnu-m4-5.7-3 ()
   (m4-test
 #>m4>
@@ -292,10 +302,11 @@ m4
 :error #>m4eof>cl-m4:1:30: indir: invalid macro name ignored
 cl-m4:1:70: define: invalid macro name ignored
 cl-m4:1:142: empty string treated as 0 in builtin `divert'
-m4eof))
+m4eof
+
+:depends (list "indir" "defn" "divnum" "define")))
 
 
-; depends: pushdef, define, undefine, builtin, defn, divnum
 (deftest gnu-m4-5.8-1 ()
   (m4-test
 #>m4>
@@ -326,10 +337,11 @@ undefine(foo)
 BAR
 
 foo
-m4))
+m4
+
+:depends (list "pushdef" "define" "undefine" "builtin" "defn" "divnum")))
 
 
-; depends: builtin, indir, index
 (deftest gnu-m4-5.8-3 ()
   (m4-test
 #>m4>
@@ -357,10 +369,11 @@ cl-m4:1:57: undefined builtin `'
 cl-m4:2:15: undefined builtin ``'
              '
 cl-m4:2:30: too few arguments to builtin `index'
-m4eof))
+m4eof
+
+:depends (list "builtin" "indir" "index")))
 
 
-; depends: ifdef, define
 (deftest gnu-m4-6.1 ()
   (m4-test
 #>m4>
@@ -378,10 +391,11 @@ no
 m4
 
 :error #>m4eof>cl-m4:1:186: excess arguments to builtin `ifdef' ignored
-m4eof))
+m4eof
+
+:depends (list "ifdef" "define")))
 
 
-; depends: ifelse
 (deftest gnu-m4-6.2-1 ()
   (m4-test
 #>m4>
@@ -395,10 +409,11 @@ m4
 m4
 
 :error #>m4eof>cl-m4:1:45: too few arguments to builtin `ifelse'
-m4eof))
+m4eof
+
+:depends (list "ifelse")))
 
 
-; depends: ifelse, define
 (deftest gnu-m4-6.2-2 ()
   (m4-test
 #>m4>
@@ -414,11 +429,11 @@ true
 
 true
 false
-m4))
+m4
+
+:depends (list "ifelse" "define")))
 
 
-
-; depends: ifelse, define
 (deftest gnu-m4-6.2-3 ()
   (m4-test
 #>m4>
@@ -432,10 +447,11 @@ m4
 foo
 arguments:1
 arguments:3
-m4))
+m4
+
+:depends (list "ifelse" "define")))
 
 
-; depends: ifelse, define
 (deftest gnu-m4-6.2-4 ()
   (m4-test
 #>m4>
@@ -454,10 +470,11 @@ m4
 
 :error #>m4eof>cl-m4:1:46: excess arguments to builtin `ifelse' ignored
 cl-m4:1:224: excess arguments to builtin `ifelse' ignored
-m4eof))
+m4eof
+
+:depends (list "ifelse" "define")))
 
 
-; depends: shift
 (deftest gnu-m4-6.3-1 ()
   (m4-test
 #>m4>
@@ -470,10 +487,11 @@ m4
 shift
 
 bar,baz
-m4))
+m4
+
+:depends (list "shift")))
 
 
-; depends: define, ifelse, $\d, $#, shift
 (deftest composite-reverse ()
   (m4-test
 #>m4>
@@ -489,7 +507,10 @@ m4
 
 foo
 and gnus, gnats, bar, foo
-m4))
+m4
+
+:depends (list "define" "ifelse" "shift")))
+
 
 ; TODO incr
 ; depends: define, ifelse, shift, incr, $\d
@@ -535,7 +556,6 @@ m4))
 ;; m4))
 
 
-; depends: define, dumpdef
 (deftest gnu-m4-7.1-1 ()
   (m4-test
 #>m4>
@@ -552,10 +572,11 @@ m4
 
 :error #>m4>foo:	Hello world.
 define:	<define>
-m4))
+m4
+
+:depends (list "define" "dumpdef")))
 
 
-; depends: pushdef, popdef, dumpdef
 (deftest gnu-m4-7.1-2 ()
   (m4-test
 #>m4>
@@ -573,13 +594,14 @@ m4
 :error #>m4eof>f:	`$0'1
 cl-m4:1:96: undefined macro `f'
 
-m4eof))
+m4eof
+
+:depends (list "pushdef" "popdef" "dumpdef")))
 
 
 ;; TODO traceon, traceoff, debugmode, debugfile
 
 
-; depends: define, dnl
 (deftest gnu-m4-8.1-1 ()
   (m4-test
 #>m4>
@@ -589,10 +611,11 @@ m4
 
 #>m4>
 Macro foo.
-m4))
+m4
+
+:depends (list "define" "dnl")))
 
 
-; depends: define, dnl
 (deftest gnu-m4-8.1-2 ()
   (m4-test
 #>m4>
@@ -606,11 +629,12 @@ See how foo was defined, like this?
 m4
 
 :error #>m4eof>cl-m4:2:27: excess arguments to builtin `dnl' ignored
-m4eof))
+m4eof
+
+:depends (list "define" "dnl")))
 
 
 ;; TODO: dnl EOF without newline
-; depends: m4wrap, define, dnl
 (deftest gnu-m4-8.1-3 ()
   (m4-test
 #>m4eof>
@@ -626,10 +650,11 @@ m4eof
 m4
 
 :error #>m4eof>WARNING: end of file treated as newline
-m4eof))
+m4eof
+
+:depends (list "m4wrap" "define" "dnl")))
 
 
-; depends: define, changequote
 (deftest gnu-m4-8.2-1 ()
   (m4-test
 #>m4>
@@ -642,10 +667,11 @@ m4
 
 
 Macro foo.
-m4))
+m4
+
+:depends (list "define" "changequote")))
 
 
-; depends: define, changequote
 (deftest gnu-m4-8.2-2 ()
   (m4-test
 #>m4>
@@ -658,10 +684,11 @@ m4
 
 
 Macro [[foo]].
-m4))
+m4
+
+:depends (list "define" "changequote")))
 
 
-; depends: define, changequote
 (deftest gnu-m4-8.2-3 ()
   (m4-test
 #>m4>
@@ -680,10 +707,11 @@ Macro `FOO'.
 `Macro `FOO'.'
 
 Macro FOO.
-m4))
+m4
+
+:depends (list "define" "changequote")))
 
 
-; depends: define, changequote
 (deftest gnu-m4-8.2-4 ()
   (m4-test
 #>m4>
@@ -714,10 +742,11 @@ qHIQ
 
 hi1hi2
 HI hi
-m4))
+m4
+
+:depends (list "define" "changequote")))
 
 
-; depends: define, changequote, $#, $@
 (deftest gnu-m4-8.2-5 ()
   (m4-test
 #>m4>
@@ -746,10 +775,11 @@ m4
 
 
 1:HIhibye:
-m4))
+m4
+
+:depends (list "define" "changequote")))
 
 
-; depends: changequote, dnl, define, $\*, $\d
 (deftest gnu-m4-8.2-6 ()
   (m4-test
 #>m4>
@@ -767,10 +797,11 @@ m4
 #>m4>
 1, (2), 1, (2), a, a, [a, a]
 1,(2),1,(2),a, a,[a, a]
-m4))
+m4
+
+:depends (list "changequote" "dnl" "define")))
 
 
-; depends: define, changequote
 (deftest gnu-m4-8.2-7 ()
   (m4-test
 #>m4>
@@ -795,10 +826,11 @@ hi" "HI"
 hi`hi'hi
 
 hiHIhi
-m4))
+m4
+
+:depends (list "define" "changequote")))
 
 
-; depends: define, changecom
 (deftest gnu-m4-8.3-1 ()
   (m4-test
 #>m4>
@@ -815,10 +847,11 @@ m4
 
 # Not a COMMENT anymore
 But: /* this is a comment now */ while this is not a COMMENT
-m4))
+m4
+
+:depends (list "define" "changecom")))
 
 
-; depends: define, changecom
 (deftest gnu-m4-8.3-2 ()
   (m4-test
 #>m4>
@@ -835,10 +868,11 @@ m4
 # Not a COMMENT anymore
 
 # comment again
-m4))
+m4
+
+:depends (list "define" "changecom")))
 
 
-; depends: define, changecom
 (deftest gnu-m4-8.3-3 ()
   (m4-test
 #>m4>
@@ -859,10 +893,11 @@ q hi Q HI
 
 hello
 HI 1hi2
-m4))
+m4
+
+:depends (list "define" "changecom")))
 
 
-; depends: define, changecom
 (deftest gnu-m4-8.3-4 ()
   (m4-test
 #>m4>
@@ -895,10 +930,11 @@ m4
 
 3:HI,,HI,HI:HI,,`'hi,HI:
 3:HI,,`'hi,HI:HI,,`'hi,HI:
-m4))
+m4
+
+:depends (list "define" "changecom")))
 
 
-; depends: define, m4wrap
 (deftest gnu-m4-8.5-1 ()
   (m4-test
 #>m4eof>
@@ -913,7 +949,9 @@ m4eof
 
 This is the first and last normal input line.
 This is the cleanup action.
-m4))
+m4
+
+:depends (list "define" "m4wrap")))
 
 
 ;; ; TODO eval, decr
@@ -934,7 +972,6 @@ m4))
 ;; m4))
 
 
-; depends: define, m4wrap
 (deftest gnu-m4-8.5-3 ()
   (m4-test
 #>m4eof>
@@ -947,10 +984,11 @@ m4eof
 
 
 AA
-m4))
+m4
+
+:depends (list "define" "m4wrap")))
 
 
-; depends: include, sinclude
 (deftest gnu-m4-9.1-1 ()
   (m4-test
 #>m4>
@@ -968,10 +1006,11 @@ m4
 
 :error #>m4eof>cl-m4:1:16: cannot open `none': No such file or directory
 cl-m4:1:26: cannot open `': No such file or directory
-m4eof))
+m4eof
+
+:depends (list "include" "sinclude")))
 
 
-; depends: define, include
 (deftest gnu-m4-9.1-2 ()
   (m4-test
 #>m4eof>
@@ -986,10 +1025,10 @@ FOO
 Include file end
 
 m4
-:include-path (list (merge-pathnames "fixtures/" *cwd*))))
+:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:depends (list "define" "include")))
 
 
-; depends: define, include
 (deftest gnu-m4-9.1-3 ()
   (m4-test
 #>m4eof>
@@ -1004,10 +1043,10 @@ foo
 Include file end
 <<
 m4
-:include-path (list (merge-pathnames "fixtures/" *cwd*))))
+:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:depends (list "define" "include")))
 
 
-; depends: divert
 (deftest gnu-m4-10.1-1 ()
   (m4-test
 #>m4>
@@ -1022,10 +1061,11 @@ m4
 This text is not diverted.
 
 This text is diverted.
-m4))
+m4
+
+:depends (list "divert")))
 
 
-; depends: define, divert, m4wrap
 (deftest gnu-m4-10.1-2 ()
   (m4-test
 #>m4eof>
@@ -1040,10 +1080,11 @@ m4eof
 
 
 Wrapped TEXT precedes diverted text.
-m4))
+m4
+
+:depends (list "define" "divert" "m4wrap")))
 
 
-; depends: define, divert
 (deftest gnu-m4-10.1-3 ()
   (m4-test
 #>m4>
@@ -1055,7 +1096,9 @@ m4
 
 #>m4>
 
-m4))
+m4
+
+:depends (list "define" "divert")))
 
 
 ;; ; TODO eval
@@ -1073,7 +1116,6 @@ m4))
 ;; m4))
 
 
-; depends: define, divert, ifelse, builtin, $#, $@, $\d
 (deftest gnu-m4-10.1-5 ()
   (m4-test
 #>m4>
@@ -1090,10 +1132,11 @@ We decided to  the stream for irrigation.
 
 
 We decided to divert the stream for irrigation.
-m4))
+m4
+
+:depends (list "define" "divert" "ifelse" "builtin")))
 
 
-; depends: divert, undivert
 (deftest gnu-m4-10.2-1 ()
   (m4-test
 #>m4>
@@ -1110,10 +1153,11 @@ This text is not diverted.
 
 This text is diverted.
 
-m4))
+m4
+
+:depends (list "divert" "undivert")))
 
 
-; depends: divert, undivert
 (deftest gnu-m4-10.2-2 ()
   (m4-test
 #>m4>
@@ -1138,10 +1182,11 @@ diverted text
 
 more
 diverted text
-m4))
+m4
+
+:depends (list "divert" "undivert")))
 
 
-; depends: divert, undivert
 (deftest gnu-m4-10.2-3 ()
   (m4-test
 #>m4>
@@ -1160,10 +1205,11 @@ This text is diverted first.
 
 
 This text is also diverted but not appended.
-m4))
+m4
+
+:depends (list "divert" "undivert")))
 
 
-; depends: divert, undivert, dnl
 (deftest gnu-m4-10.2-4 ()
   (m4-test
 #>m4>
@@ -1178,10 +1224,11 @@ m4
 two
 one
 three
-m4))
+m4
+
+:depends (list "divert" "undivert" "dnl")))
 
 
-; depends: define, undivert, include
 (deftest gnu-m4-10.2-5 ()
   (m4-test
 #>m4>
@@ -1198,10 +1245,10 @@ BAR
 
 m4
 
-:include-path (list (merge-pathnames "fixtures/" *cwd*))))
+:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:depends (list "define" "undivert" "include")))
 
 
-; depends: divert, undivert, dnl
 (deftest gnu-m4-10.2-6 ()
   (m4-test
 #>m4>
@@ -1219,10 +1266,10 @@ bar
 diversion three
 m4
 
-:include-path (list (merge-pathnames "fixtures/" *cwd*))))
+:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:depends (list "divert" "undivert" "dnl")))
 
 
-; depends: divert, divnum
 (deftest gnu-m4-10.3 ()
   (m4-test
 #>m4>
@@ -1239,10 +1286,11 @@ Initial 0
 Diversion one: 1
 
 Diversion two: 2
-m4))
+m4
+
+:depends (list "divert" "divnum")))
 
 
-; depends: divert, undivert
 (deftest gnu-m4-10.4 ()
   (m4-test
 #>m4>
@@ -1255,10 +1303,11 @@ undivert
 m4
 
 #>m4>
-m4))
+m4
+
+:depends (list "divert" "undivert")))
 
 
-; depends: define, pushdef, divnum, divert, undivert, popdef, $@
 (deftest composite-cleardivert ()
   (m4-test
 #>m4>
@@ -1275,10 +1324,11 @@ m4
 
 #>m4>
 Diversion three: 3
-m4))
+m4
+
+:depends (list "define" "pushdef" "divnum" "divert" "undivert" "popdef")))
 
 
-; depends: define, pushdef, divnum, divert, ifelse, undivert, popdef, $@
 (deftest composite-cleardivert-fixed ()
   (m4-test
 #>m4>
@@ -1295,10 +1345,11 @@ cleardivert`'dnl
 m4
 
 #>m4>
-m4))
+m4
+
+:depends (list "define" "pushdef" "divnum" "divert" "ifelse" "undivert" "popdef")))
 
 
-; depends: len
 (deftest gnu-m4-11.1 ()
   (m4-test
 #>m4>
@@ -1309,10 +1360,11 @@ m4
 #>m4>
 0
 6
-m4))
+m4
+
+:depends (list "len")))
 
 
-; depends: index
 (deftest gnu-m4-11.2-1 ()
   (m4-test
 #>m4>
@@ -1323,10 +1375,11 @@ m4
 #>m4>
 7
 -1
-m4))
+m4
+
+:depends (list "index")))
 
 
-; depends: index
 (deftest gnu-m4-11.2-2 ()
   (m4-test
 #>m4>
@@ -1342,10 +1395,11 @@ m4
 m4
 
 :error #>m4eof>cl-m4:1:13: too few arguments to builtin `index'
-m4eof))
+m4eof
+
+:depends (list "index")))
 
 
-; depends: regexp
 (deftest gnu-m4-11.3-1 ()
   (m4-test
 #>m4>
@@ -1360,10 +1414,11 @@ m4
 -1
 *** Unix *** nix ***
 
-m4))
+m4
+
+:depends (list "regexp")))
 
 
-; depends: regexp
 (deftest gnu-m4-11.3-2 ()
   (m4-test
 #>m4>
@@ -1383,10 +1438,11 @@ cl-m4:1:60: trailing \ ignored in replacement
 cl-m4:1:109: sub-expression 4 not present
 cl-m4:1:109: sub-expression 5 not present
 cl-m4:1:109: sub-expression 6 not present
-m4eof))
+m4eof
+
+:depends (list "regexp")))
 
 
-; depends: regexp
 (deftest gnu-m4-11.3-3 ()
   (m4-test
 #>m4>
@@ -1402,10 +1458,11 @@ m4
 m4
 
 :error #>m4eof>cl-m4:1:14: too few arguments to builtin `regexp'
-m4eof))
+m4eof
+
+:depends (list "regexp")))
 
 
-; depends: substr
 (deftest gnu-m4-11.4-1 ()
   (m4-test
 #>m4>
@@ -1416,10 +1473,11 @@ m4
 #>m4>
 gnats, and armadillos
 gnats
-m4))
+m4
+
+:depends (list "substr")))
 
 
-; depends: substr
 (deftest gnu-m4-11.4-2 ()
   (m4-test
 #>m4>
@@ -1434,10 +1492,11 @@ m4
 
 :error #>m4eof>cl-m4:1:14: too few arguments to builtin `substr'
 cl-m4:1:29: empty string treated as 0 in builtin `substr'
-m4eof))
+m4eof
+
+:depends (list "substr")))
 
 
-; depends: translit
 (deftest gnu-m4-11.5-1 ()
   (m4-test
 #>m4>
@@ -1454,10 +1513,11 @@ GNUS NOT UNIX
 tmfs not fnix
 <;>abcba
 bgced
-m4))
+m4
+
+:depends (list "translit")))
 
 
-; depends: translit
 (deftest gnu-m4-11.5-2 ()
   (m4-test
 #>m4>
@@ -1469,4 +1529,6 @@ abc
 m4
 
 :error #>m4eof>cl-m4:1:16: too few arguments to builtin `translit'
-m4eof))
+m4eof
+
+:depends (list "translit")))
