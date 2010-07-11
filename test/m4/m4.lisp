@@ -29,11 +29,9 @@
 (set-dispatch-macro-character #\# #\> #'evol:read-heredoc)
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
-  (defvar *m4-runtime-lib*))
-
-(deftest test-m4-macro-exists (macro)
-  (with-m4-lib
-   (is (functionp (m4-macro macro)))))
+  (deftest test-m4-macro-exists (macro)
+    (with-m4-lib
+     (is (functionp (m4-macro macro))))))
 
 (defmacro with-m4-error (message &body body)
   (let ((error (gensym)))
@@ -52,7 +50,8 @@
               `(signals ,signal (funcall (m4-macro ,macro) t ,@args))
             `(is (equal ,result (funcall (m4-macro ,macro) t ,@args))))))))
 
-(deftest m4-test (m4 result &key (error "") include-path)
+(deftest m4-test (m4 result &key (error "") include-path depends)
+  (mapc #'test-m4-macro-exists depends)
   (let ((out (make-array 0 :element-type 'character :adjustable t :fill-pointer 0)))
     (with-input-from-string (input-stream m4)
       (with-output-to-string (output-stream out)
