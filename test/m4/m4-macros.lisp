@@ -275,7 +275,7 @@ m4
 
 m4
 
-:error #>m4eof>cl-m4:1:92: undefined macro `f'
+:error #>m4eof>cl-m4:5:25: undefined macro `f'
 m4eof
 
 :depends (list "define" "undefine" "indir")))
@@ -299,9 +299,9 @@ m4
 
 m4
 
-:error #>m4eof>cl-m4:1:30: indir: invalid macro name ignored
-cl-m4:1:70: define: invalid macro name ignored
-cl-m4:1:142: empty string treated as 0 in builtin `divert'
+:error #>m4eof>cl-m4:2:29: indir: invalid macro name ignored
+cl-m4:3:39: define: invalid macro name ignored
+cl-m4:6:28: empty string treated as 0 in builtin `divert'
 m4eof
 
 :depends (list "indir" "defn" "divnum" "define")))
@@ -363,12 +363,12 @@ builtin
 
 m4
 
-:error #>m4eof>cl-m4:1:18: undefined builtin `'
-cl-m4:1:37: too few arguments to builtin `builtin'
-cl-m4:1:57: undefined builtin `'
-cl-m4:2:15: undefined builtin ``'
+:error #>m4eof>cl-m4:3:9: undefined builtin `'
+cl-m4:4:18: too few arguments to builtin `builtin'
+cl-m4:5:19: undefined builtin `'
+cl-m4:7:15: undefined builtin ``'
              '
-cl-m4:2:30: too few arguments to builtin `index'
+cl-m4:8:14: too few arguments to builtin `index'
 m4eof
 
 :depends (list "builtin" "indir" "index")))
@@ -390,7 +390,7 @@ foo is defined
 no
 m4
 
-:error #>m4eof>cl-m4:1:186: excess arguments to builtin `ifdef' ignored
+:error #>m4eof>cl-m4:5:53: excess arguments to builtin `ifdef' ignored
 m4eof
 
 :depends (list "ifdef" "define")))
@@ -408,7 +408,7 @@ m4
 
 m4
 
-:error #>m4eof>cl-m4:1:45: too few arguments to builtin `ifelse'
+:error #>m4eof>cl-m4:3:20: too few arguments to builtin `ifelse'
 m4eof
 
 :depends (list "ifelse")))
@@ -468,8 +468,8 @@ seventh
 7
 m4
 
-:error #>m4eof>cl-m4:1:46: excess arguments to builtin `ifelse' ignored
-cl-m4:1:224: excess arguments to builtin `ifelse' ignored
+:error #>m4eof>cl-m4:2:45: excess arguments to builtin `ifelse' ignored
+cl-m4:5:56: excess arguments to builtin `ifelse' ignored
 m4eof
 
 :depends (list "ifelse" "define")))
@@ -592,7 +592,7 @@ f1
 m4
 
 :error #>m4eof>f:	`$0'1
-cl-m4:1:96: undefined macro `f'
+cl-m4:4:25: undefined macro `f'
 
 m4eof
 
@@ -628,7 +628,7 @@ m4
 See how foo was defined, like this?
 m4
 
-:error #>m4eof>cl-m4:2:27: excess arguments to builtin `dnl' ignored
+:error #>m4eof>cl-m4:3:27: excess arguments to builtin `dnl' ignored
 m4eof
 
 :depends (list "define" "dnl")))
@@ -648,7 +648,7 @@ m4eof
 0 HI 2 HI
 m4
 
-:error #>m4eof>cl-m4:2:37: end of file treated as newline
+:error #>m4eof>cl-m4:5:0: end of file treated as newline
 m4eof
 
 :depends (list "m4wrap" "define" "dnl")))
@@ -1003,8 +1003,8 @@ m4
 
 m4
 
-:error #>m4eof>cl-m4:1:16: cannot open `none': No such file or directory
-cl-m4:1:26: cannot open `': No such file or directory
+:error #>m4eof>cl-m4:2:15: cannot open `none': No such file or directory
+cl-m4:3:9: cannot open `': No such file or directory
 m4eof
 
 :depends (list "include" "sinclude")))
@@ -1393,7 +1393,7 @@ m4
 1
 m4
 
-:error #>m4eof>cl-m4:1:13: too few arguments to builtin `index'
+:error #>m4eof>cl-m4:2:12: too few arguments to builtin `index'
 m4eof
 
 :depends (list "index")))
@@ -1432,11 +1432,11 @@ m4
 c
 m4
 
-:error #>m4eof>cl-m4:1:60: sub-expression 1 not present
-cl-m4:1:60: trailing \ ignored in replacement
-cl-m4:1:109: sub-expression 4 not present
-cl-m4:1:109: sub-expression 5 not present
-cl-m4:1:109: sub-expression 6 not present
+:error #>m4eof>cl-m4:3:25: sub-expression 1 not present
+cl-m4:3:25: trailing \ ignored in replacement
+cl-m4:4:48: sub-expression 4 not present
+cl-m4:4:48: sub-expression 5 not present
+cl-m4:4:48: sub-expression 6 not present
 m4eof
 
 :depends (list "regexp")))
@@ -1456,7 +1456,7 @@ m4
 \def
 m4
 
-:error #>m4eof>cl-m4:1:14: too few arguments to builtin `regexp'
+:error #>m4eof>cl-m4:2:13: too few arguments to builtin `regexp'
 m4eof
 
 :depends (list "regexp")))
@@ -1489,8 +1489,8 @@ abc
 abc
 m4
 
-:error #>m4eof>cl-m4:1:14: too few arguments to builtin `substr'
-cl-m4:1:29: empty string treated as 0 in builtin `substr'
+:error #>m4eof>cl-m4:2:13: too few arguments to builtin `substr'
+cl-m4:3:14: empty string treated as 0 in builtin `substr'
 m4eof
 
 :depends (list "substr")))
@@ -1527,7 +1527,7 @@ m4
 abc
 m4
 
-:error #>m4eof>cl-m4:1:16: too few arguments to builtin `translit'
+:error #>m4eof>cl-m4:2:15: too few arguments to builtin `translit'
 m4eof
 
 :depends (list "translit")))
