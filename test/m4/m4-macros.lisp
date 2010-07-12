@@ -634,7 +634,6 @@ m4eof
 :depends (list "define" "dnl")))
 
 
-;; TODO: dnl EOF without newline
 (deftest gnu-m4-8.1-3 ()
   (m4-test
 #>m4eof>
@@ -649,7 +648,7 @@ m4eof
 0 HI 2 HI
 m4
 
-:error #>m4eof>WARNING: end of file treated as newline
+:error #>m4eof>cl-m4:2:37: end of file treated as newline
 m4eof
 
 :depends (list "m4wrap" "define" "dnl")))
