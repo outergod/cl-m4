@@ -18,9 +18,9 @@
 
 (in-suite m4)
 
-(eval-when (:compile-toplevel)
-  (defparameter *cwd* (make-pathname
-                       :directory (pathname-directory (or *compile-file-truename* "")))))
+(defun relative-pathname (pathname)
+  (merge-pathnames pathname
+                   (asdf:system-relative-pathname 'evol "test/m4/")))
 
 ; TODO format
 ; depends: define, defn, format
@@ -1025,7 +1025,7 @@ FOO
 Include file end
 
 m4
-:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:include-path (list (relative-pathname "fixtures/"))
 :depends (list "define" "include")))
 
 
@@ -1043,7 +1043,7 @@ foo
 Include file end
 <<
 m4
-:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:include-path (list (relative-pathname "fixtures/"))
 :depends (list "define" "include")))
 
 
@@ -1245,7 +1245,7 @@ BAR
 
 m4
 
-:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:include-path (list (relative-pathname "fixtures/"))
 :depends (list "define" "undivert" "include")))
 
 
@@ -1266,7 +1266,7 @@ bar
 diversion three
 m4
 
-:include-path (list (merge-pathnames "fixtures/" *cwd*))
+:include-path (list (relative-pathname "fixtures/"))
 :depends (list "divert" "undivert" "dnl")))
 
 
