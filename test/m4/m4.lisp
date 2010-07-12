@@ -28,7 +28,7 @@
 
 (set-dispatch-macro-character #\# #\> #'evol:read-heredoc)
 
-(eval-when (:compile-toplevel :execute :load-toplevel)
+(eval-when (:execute :load-toplevel)
   (deftest test-m4-macro-exists (macro)
     (with-m4-lib
      (is (functionp (m4-macro macro))))))
