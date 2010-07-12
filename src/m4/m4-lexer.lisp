@@ -118,11 +118,13 @@
             (setq double-buffer (subseq double-buffer length))
             (if (>= position length)
                 (decf position length)
-              (if (equal :newline class)
-                  (progn
-                    (setf (lexer-column stream) 0)
-                    (incf (lexer-row stream)))
-                (incf (lexer-column stream) (- length position))))))
+              (let ((newlines (count (string #\Newline) image :test #'string=)))
+                (if (> newlines 0)
+                    (progn
+                      (setf (lexer-column stream)
+                            (search (string #\Newline) (reverse image)))
+                      (incf (lexer-row stream) newlines))
+                  (incf (lexer-column stream) (- length position)))))))
         (values class image))))
   (:method ((stream lexer-input-stream) &optional (peek nil))
     (declare (ignore peek))
