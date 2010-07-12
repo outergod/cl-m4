@@ -16,6 +16,8 @@
 
 (in-package :evol)
 
+;;; Recurse descent M4 parser implemention
+;; Helpers
 (defmacro with-tokens-active ((&rest tokens) &body body)
   `(let ,(mapcar #'(lambda (token)
                      (list token ""))
@@ -58,6 +60,7 @@
     (write-string word out)))
 
 
+;; Recursive descent parser functions
 (defun parse-m4-comment (lexer image)
   (let ((row (lexer-row lexer))
         (column (lexer-column lexer)))
@@ -133,7 +136,12 @@
   (with-tokens-active ()
     (do ((class (stream-read-token lexer) (stream-read-token lexer)))
         ((or (equal :newline class)
-             (null class)) ""))))
+             (null class))
+         (prog1 ""
+           (when (null class)
+             (let ((*m4-parse-row* (lexer-row lexer))
+                   (*m4-parse-column* (lexer-column lexer)))
+               (m4-warn "end of file treated as newline"))))))))
 
 (defun parse-m4-macro (lexer macro-name)
   (let ((macro (m4-macro macro-name)))
@@ -182,6 +190,8 @@
               ""))
            (t image)))))
 
+
+;; Top-level M4 API
 (defun process-m4 (input-stream output-stream &key (include-path (list)) (prepend-include-path (list)))
   (let* ((*m4-quote-start* "`")
          (*m4-quote-end* "'")

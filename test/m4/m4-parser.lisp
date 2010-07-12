@@ -114,7 +114,8 @@ dnl `token'
 
 
 (deftest dnl-no-newline ()
-  (m4-test "dnl" ""))
+  (m4-test "dnl" "" :error #>m4eof>cl-m4:1:3: end of file treated as newline
+m4eof))
 
 
 (deftest name-comment-space ()
