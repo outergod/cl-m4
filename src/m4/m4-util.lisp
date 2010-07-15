@@ -28,8 +28,8 @@
 (define-condition macro-dnl-invocation-condition (error) ())
 
 (define-condition macro-defn-invocation-condition (error)
-  ((macros :initarg :macros
-           :reader macro-defn-invocation-result)))
+  ((macro :initarg :macro
+          :reader macro-defn-invocation-result)))
 
 
 ;; utilities
@@ -186,3 +186,9 @@
                (remhash diversion *m4-diversion-table*)))))
     (mapcar #'flush (or diversions
                         (sort (alexandria:hash-table-keys *m4-diversion-table*) #'<)))))
+
+(defun expand-macro-token (token)
+  (concatenate 'string
+               *m4-quote-start*
+               (funcall (macro-token-m4macro token) nil :expansion)
+               *m4-quote-end*))

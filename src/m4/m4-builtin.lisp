@@ -55,6 +55,8 @@
                                      (declare (ignore ,macro-name))
                                      (cond ((eql :definition ,internal-call)
                                             (concatenate 'string "<" ,name ">"))
+                                           ((eql :expansion ,internal-call)
+                                            "")
                                            ((and ,arguments-only (not ,internal-call) (null ,macro-args)) ; most macros are only recognized with parameters
                                             ,name)
                                            ((< (length ,macro-args) ,minimum-arguments)
@@ -74,7 +76,7 @@
   (let ((fun (if (macro-token-p expansion)
                  (macro-token-m4macro expansion)
                #'(lambda (macro-name internal-call &rest macro-args)
-                   (if (eql :definition internal-call)
+                   (if (find internal-call '(:definition :expansion))
                        expansion
                      (macro-return
                       (cl-ppcre:regex-replace-all "\\$(\\d+|#|\\*|@)" expansion
@@ -110,15 +112,23 @@
           args)))
 
 (defm4macro "defn" (&rest args) ()
-  (error 'macro-defn-invocation-condition
-         :macros (mapcar #'(lambda (name)
-                             (if (m4-macro name)
-                                 (make-macro-token (m4-macro name)
-                                                   (if (gethash name *m4-lib*)
-                                                       ""
-                                                     name))
-                               ""))
-                         args)))
+  (cond ((= 0 (length args))
+         "")
+        ((and (= 1 (length args))
+              (m4-macro (car args) t)) ; builtin macro
+         (error 'macro-defn-invocation-condition
+                :macro (make-macro-token (m4-macro (car args) t) (car args))))
+        (t (macro-return
+            (apply #'concatenate 'string            
+                   (mapcar #'(lambda (name)
+                               (let ((macro (m4-macro name)))
+                                 (if macro
+                                     (if (m4-macro name t)
+                                         (prog1 ""
+                                           (m4-warn (format nil "cannot concatenate builtin `~a'" name)))
+                                       (m4-quote-string (funcall macro name :expansion)))
+                                   "")))
+                           args))))))
 
 (defm4macro "pushdef" (name &optional (expansion "")) (:minimum-arguments 1)
   (prog1 ""

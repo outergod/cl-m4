@@ -147,7 +147,7 @@
 
 (defgeneric m4-push-macro (m4-input-stream macro)
   (:method ((stream m4-input-stream) macro)
-    (setf (m4-macro-stack stream) macro)))
+    (push macro (m4-macro-stack stream))))
 
 (defgeneric m4-pop-macro (m4-input-stream)
   (:method ((stream m4-input-stream))
