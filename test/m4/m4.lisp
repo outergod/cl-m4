@@ -58,3 +58,7 @@
         (with-m4-error error
           (evol:process-m4 input-stream output-stream :include-path include-path)
           (is (equal result out)))))))
+
+(defun relative-pathname (pathname)
+  (merge-pathnames pathname
+                   (asdf:system-relative-pathname 'evol "test/m4/")))
