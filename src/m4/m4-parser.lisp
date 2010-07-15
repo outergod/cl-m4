@@ -49,12 +49,7 @@
         (*m4-parse-column* (lexer-column lexer)))
     (if (not args)
         (funcall macro macro-name nil)
-      (apply macro macro-name nil
-             (mapcar #'(lambda (string)
-                         (if (stringp string)
-                             (string-left-trim '(#\Newline #\Space) string)
-                           string)) ; macro-token
-                     (split-merge args :separator))))))
+      (apply macro macro-name nil (split-merge args :separator)))))
 
 (defun m4-out (word)
   (with-m4-diversion-stream (out)
@@ -101,6 +96,12 @@
                         (t (m4-quote (cons image rec) quoting-level))))))
       (m4-quote (list) 1))))
 
+(defun parse-m4-munch-whitespace (lexer)
+  (with-tokens-active ()
+    (do ((class (stream-read-token lexer t) (stream-read-token lexer t)))
+        ((not (find class '(:space :newline))))
+      (stream-read-token lexer))))
+
 (defun parse-m4-macro-arguments (lexer)
   (let ((row (lexer-row lexer))
         (column (lexer-column lexer)))
@@ -109,7 +110,9 @@
                    (cons (concatenate 'string (car rec) string)
                          (cdr rec))
                  (cons string rec)))
-             (m4-macro-arguments (rec paren-level)
+             (m4-macro-arguments (rec paren-level &optional (new-argument nil))
+               (when new-argument
+                 (parse-m4-munch-whitespace lexer)) ; munch whitespace from beginning of argument
                (multiple-value-bind (class image)
                    (with-tokens-active (*m4-quote-start* *m4-macro-name* *m4-comment-start*)
                      (stream-read-token lexer))
@@ -129,9 +132,10 @@
                         (m4-macro-arguments (m4-group-merge (parse-m4-macro lexer image) rec paren-level) paren-level))
                        ((and (= 1 paren-level)
                              (equal :comma class))
-                        (m4-macro-arguments (cons :separator rec) paren-level))
+                        (parse-m4-munch-whitespace lexer)
+                        (m4-macro-arguments (cons :separator rec) paren-level t))
                        (t (m4-macro-arguments (m4-group-merge image rec paren-level) paren-level))))))
-      (m4-macro-arguments (list "") 1))))
+      (m4-macro-arguments (list "") 1 t))))
 
 (defun parse-m4-dnl (lexer)
   (with-tokens-active ()
@@ -212,6 +216,7 @@
                                         (*m4-quote-end* . :quote-end)
                                         ("," . :comma)
                                         ("\\n" . :newline)
+                                        (" " . :space) ; only required for beginning of args
                                         ("\\(" . :open-paren)
                                         ("\\)" . :close-paren)
                                         ("." . :token)))))
