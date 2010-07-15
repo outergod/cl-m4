@@ -244,3 +244,23 @@ token
 
 (deftest cascaded-quotes ()
   (m4-test "``token1'token2`token3''" "`token1'token2`token3'"))
+
+
+(deftest arglist-munchy ()
+  (m4-test
+#>m4>
+define(`foo', `  hello?')dnl
+foo
+define(`bar',`  '`hello2?')dnl
+bar
+define(  `bop',  `  '`hello3?')dnl
+bop
+m4
+
+#>m4>
+  hello?
+  hello2?
+  hello3?
+m4
+
+:depends (list "define" "dnl")))
