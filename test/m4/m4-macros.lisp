@@ -18,11 +18,6 @@
 
 (in-suite m4)
 
-(defun relative-pathname (pathname)
-  (merge-pathnames pathname
-                   (asdf:system-relative-pathname 'evol "test/m4/")))
-
-
 ;;; 4 How to invoke macros
 ;; 4.4 On Quoting Arguments to macros
 ; "For example, if foo is a macro,
@@ -298,6 +293,7 @@ m4
 :depends (list "define" "undefine" "pushdef")))
 
 
+;; 5.7 Indirect call of macros
 (deftest gnu-m4-5.7-1 ()
   (m4-test
 #>m4>
@@ -363,6 +359,7 @@ m4eof
 :depends (list "indir" "defn" "divnum" "define")))
 
 
+;; 5.8 Indirect call of builtins
 (deftest gnu-m4-5.8-1 ()
   (m4-test
 #>m4>
@@ -430,6 +427,8 @@ m4eof
 :depends (list "builtin" "indir" "index")))
 
 
+;;; 6 Conditionals, loops, and recursion
+;; 6.1 Testing if a macro is defined
 (deftest gnu-m4-6.1 ()
   (m4-test
 #>m4>
@@ -452,6 +451,7 @@ m4eof
 :depends (list "ifdef" "define")))
 
 
+;; 6.2 If-else construct, or multibranch
 (deftest gnu-m4-6.2-1 ()
   (m4-test
 #>m4>
@@ -531,6 +531,7 @@ m4eof
 :depends (list "ifelse" "define")))
 
 
+;; 6.3 Recursion in m4
 (deftest gnu-m4-6.3-1 ()
   (m4-test
 #>m4>
@@ -548,6 +549,8 @@ m4
 :depends (list "shift")))
 
 
+;;; 7 How to debug macros and input
+;; 7.1 Displaying macro definitions
 (deftest gnu-m4-7.1-1 ()
   (m4-test
 #>m4>
@@ -594,6 +597,8 @@ m4eof
 ;; TODO traceon, traceoff, debugmode, debugfile
 
 
+;;; 8 Input control
+;; 8.1 Deleting whitespace in input
 (deftest gnu-m4-8.1-1 ()
   (m4-test
 #>m4>
@@ -646,6 +651,7 @@ m4eof
 :depends (list "m4wrap" "define" "dnl")))
 
 
+;; 8.2 Changing the quote characters
 (deftest gnu-m4-8.2-1 ()
   (m4-test
 #>m4>
@@ -822,6 +828,7 @@ m4
 :depends (list "define" "changequote")))
 
 
+;; 8.3 Changing the comment delimiters
 (deftest gnu-m4-8.3-1 ()
   (m4-test
 #>m4>
@@ -926,6 +933,10 @@ m4
 :depends (list "define" "changecom")))
 
 
+;; Won't implement: changeword
+
+
+;; 8.5 Saving text until end of input
 (deftest gnu-m4-8.5-1 ()
   (m4-test
 #>m4eof>
@@ -980,6 +991,8 @@ m4
 :depends (list "define" "m4wrap")))
 
 
+;;; 9 File inclusion
+;; 9.1 Including named files
 (deftest gnu-m4-9.1-1 ()
   (m4-test
 #>m4>
@@ -1038,6 +1051,8 @@ m4
 :depends (list "define" "include")))
 
 
+;;; 10 Diverting and undiverting output
+;; 10.1 Diverting output
 (deftest gnu-m4-10.1-1 ()
   (m4-test
 #>m4>
@@ -1128,6 +1143,7 @@ m4
 :depends (list "define" "divert" "ifelse" "builtin")))
 
 
+;; 10.2 Undiverting output
 (deftest gnu-m4-10.2-1 ()
   (m4-test
 #>m4>
@@ -1261,6 +1277,7 @@ m4
 :depends (list "divert" "undivert" "dnl")))
 
 
+;; 10.3 Diversion numbers
 (deftest gnu-m4-10.3 ()
   (m4-test
 #>m4>
@@ -1282,6 +1299,7 @@ m4
 :depends (list "divert" "divnum")))
 
 
+;; 10.4 Discarding diverted text
 (deftest gnu-m4-10.4 ()
   (m4-test
 #>m4>
@@ -1299,6 +1317,8 @@ m4
 :depends (list "divert" "undivert")))
 
 
+;;; 11 Macros for text handling
+;; 11.1 Calculating length of strings
 (deftest gnu-m4-11.1 ()
   (m4-test
 #>m4>
@@ -1314,6 +1334,7 @@ m4
 :depends (list "len")))
 
 
+;; 11.2 Searching for substrings
 (deftest gnu-m4-11.2-1 ()
   (m4-test
 #>m4>
@@ -1349,6 +1370,7 @@ m4eof
 :depends (list "index")))
 
 
+;; 11.3 Searching for regular expressions
 (deftest gnu-m4-11.3-1 ()
   (m4-test
 #>m4>
@@ -1412,6 +1434,7 @@ m4eof
 :depends (list "regexp")))
 
 
+;; 11.4 Extracting substrings
 (deftest gnu-m4-11.4-1 ()
   (m4-test
 #>m4>
@@ -1446,6 +1469,7 @@ m4eof
 :depends (list "substr")))
 
 
+;; 11.5 Translating characters
 (deftest gnu-m4-11.5-1 ()
   (m4-test
 #>m4>
