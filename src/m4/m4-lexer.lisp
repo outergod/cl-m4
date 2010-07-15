@@ -1,4 +1,4 @@
-;;;; evol - m4-parser.lisp
+;;;; evol - m4-lexer.lisp
 ;;;; Copyright (C) 2010  Alexander Kahl <e-user@fsfe.org>
 ;;;; This file is part of evol.
 ;;;; evol is free software; you can redistribute it and/or modify
