@@ -38,7 +38,8 @@
         (remhash name *m4-runtime-lib*)))))
 
 (defmacro defm4macro (name args (&key (arguments-only t) (minimum-arguments 0) (accept-macro-tokens nil)) &body body)
-  (let ((macro-args (gensym))
+  (let ((macro-name (gensym))
+        (macro-args (gensym))
         (ignored-rest (gensym))
         (internal-call (gensym)))
     (flet ((transform-arguments (args)
@@ -50,7 +51,8 @@
       `(setf (gethash ,name *m4-lib*)
              (make-array 1 :adjustable t :fill-pointer 1
                            :initial-contents
-                           (list #'(lambda (,internal-call &rest ,macro-args)
+                           (list #'(lambda (,macro-name ,internal-call &rest ,macro-args)
+                                     (declare (ignore ,macro-name))
                                      (cond ((eql :definition ,internal-call)
                                             (concatenate 'string "<" ,name ">"))
                                            ((and ,arguments-only (not ,internal-call) (null ,macro-args)) ; most macros are only recognized with parameters
@@ -71,7 +73,7 @@
 (defun defm4runtimemacro (name expansion &optional (replace t))
   (let ((fun (if (macro-token-p expansion)
                  (macro-token-m4macro expansion)
-               #'(lambda (internal-call &rest macro-args)
+               #'(lambda (macro-name internal-call &rest macro-args)
                    (if (eql :definition internal-call)
                        expansion
                      (macro-return
@@ -88,7 +90,7 @@
                                                                       macro-args))
                                                              (t (let ((num (parse-integer match)))
                                                                   (if (= 0 num)
-                                                                      name
+                                                                      macro-name
                                                                     (or (nth (1- num) macro-args) ""))))))))))))))
     (pushm4macro name fun replace)))
 
@@ -134,8 +136,8 @@
                (m4-warn (format nil "undefined macro `~a'" name))
                "")
               ((null args)
-               (funcall macro t))
-              (t (apply macro t args))))
+               (funcall macro name t))
+              (t (apply macro t name args))))
     (prog1 "" (m4-warn "indir: invalid macro name ignored"))))
 
 (defm4macro "builtin" (name &rest args) (:minimum-arguments 1 :accept-macro-tokens t)
@@ -145,8 +147,8 @@
                (m4-warn (format nil "undefined builtin `~a'" name))
                "")
               ((null args)
-               (funcall macro t))
-              (t (apply macro t args))))
+               (funcall macro name t))
+              (t (apply macro name t args))))
     (prog1 "" (m4-warn "builtin: invalid macro name ignored"))))
   
 (defm4macro "ifdef" (name string-1 &optional (string-2 "")) (:minimum-arguments 2)
@@ -187,7 +189,7 @@
     (dolist (name (sort (mapcar #'(lambda (name)
                                     (let ((macro (m4-macro name)))
                                       (if macro
-                                          (format nil "~a:~a~a" name #\tab (funcall macro :definition))
+                                          (format nil "~a:~a~a" name #\tab (funcall macro name :definition))
                                         (progn
                                           (m4-warn (format nil "undefined macro `~a'" name))
                                           ""))))

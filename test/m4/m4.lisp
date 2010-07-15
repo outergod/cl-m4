@@ -47,8 +47,8 @@
      (with-m4-lib
       (with-m4-error ,error
          ,(if signal
-              `(signals ,signal (funcall (m4-macro ,macro) t ,@args))
-            `(is (equal ,result (funcall (m4-macro ,macro) t ,@args))))))))
+              `(signals ,signal (funcall (m4-macro ,macro) ,macro t ,@args))
+            `(is (equal ,result (funcall (m4-macro ,macro) ,macro t ,@args))))))))
 
 (deftest m4-test (m4 result &key (error "") include-path depends)
   (mapc #'test-m4-macro-exists depends)
