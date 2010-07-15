@@ -44,16 +44,17 @@
                      (t (acc rec (concatenate 'string string token) (cdr rest)))))))
           (acc (list) "" string-list)))
 
-(defun call-m4-macro (macro args lexer)
+(defun call-m4-macro (macro macro-name args lexer)
   (let ((*m4-parse-row* (lexer-row lexer))
         (*m4-parse-column* (lexer-column lexer)))
     (if (not args)
-        (funcall macro nil)
-      (apply macro nil (mapcar #'(lambda (string)
-                                   (if (stringp string)
-                                       (string-left-trim '(#\Newline #\Space) string)
-                                     string)) ; macro-token
-                               (split-merge args :separator))))))
+        (funcall macro macro-name nil)
+      (apply macro macro-name nil
+             (mapcar #'(lambda (string)
+                         (if (stringp string)
+                             (string-left-trim '(#\Newline #\Space) string)
+                           string)) ; macro-token
+                     (split-merge args :separator))))))
 
 (defun m4-out (word)
   (with-m4-diversion-stream (out)
@@ -154,8 +155,8 @@
          (if (equal :open-paren class)
              (progn
                (stream-read-token lexer) ; consume token
-               (call-m4-macro macro (parse-m4-macro-arguments lexer) lexer))
-           (call-m4-macro macro nil lexer)))
+               (call-m4-macro macro macro-name (parse-m4-macro-arguments lexer) lexer))
+           (call-m4-macro macro macro-name nil lexer)))
        (macro-dnl-invocation-condition ()
          (parse-m4-dnl lexer))
        (macro-defn-invocation-condition (condition)
