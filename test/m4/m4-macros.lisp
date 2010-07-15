@@ -131,7 +131,7 @@ m4
 
 #>m4>
 
-The macro
+The macro 
 The macro dnl is very useful
 
 m4

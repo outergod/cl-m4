@@ -160,11 +160,11 @@
        (macro-dnl-invocation-condition ()
          (parse-m4-dnl lexer))
        (macro-defn-invocation-condition (condition)
-         (m4-push-macro lexer (macro-defn-invocation-result condition))
-         "")
+         (prog1 ""
+           (m4-push-macro lexer (macro-defn-invocation-result condition))))
        (macro-invocation-condition (condition)
-         (lexer-unread-sequence lexer (macro-invocation-result condition))
-         "")))))
+         (prog1 ""
+           (lexer-unread-sequence lexer (macro-invocation-result condition))))))))
 
 (defun parse-m4 (lexer)
   (do* ((token (multiple-value-list (stream-read-token lexer))
@@ -186,9 +186,9 @@
            ((equal :macro-name class)
             (parse-m4-macro lexer image))
            ((equal :macro-token class)
-            (if (macro-token-p image)
-                (string (macro-token-name image))
-              ""))
+            (prog1 ""
+              (when (macro-token-p image)
+                (lexer-unread-sequence lexer (expand-macro-token image)))))
            (t image)))))
 
 
