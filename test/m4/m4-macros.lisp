@@ -22,19 +22,9 @@
   (merge-pathnames pathname
                    (asdf:system-relative-pathname 'evol "test/m4/")))
 
-; TODO format
-; depends: define, defn, format
-;; (deftest composite-array ()
-;;   (m4-test
-;; #>m4>
 
-;; m4
-
-;; #>m4>
-
-;; m4))
-
-
+;;; 4 How to invoke macros
+;; 4.4 On Quoting Arguments to macros
 ; "For example, if foo is a macro,
 ;     foo(() (`(') `(')
 ; is a macro call, with one argument, whose value is ‘() (() (’"
@@ -76,93 +66,8 @@ m4
 :depends (list "define")))
 
 
-(deftest composite-exch ()
-  (m4-test
-#>m4>
-define(`exch', `$2, $1')
-exch(`arg1', `arg2')
-define(exch(``expansion text'', ``macro''))
-macro
-m4
-
-#>m4>
-
-arg2, arg1
-
-expansion text
-m4
-
-:depends (list "define")))
-
-
-(deftest composite-nargs ()
-  (m4-test
-#>m4>
-define(`nargs', `$#')
-nargs
-nargs()
-nargs(`arg1', `arg2', `arg3')
-nargs(`commas can be quoted, like this')
-nargs(arg1#inside comments, commas do not separate arguments
-                       still arg1)
-nargs((unquoted parentheses, like this, group arguments))
-nargs(`('quoted parentheses, like this, don't group arguments`)')
-m4
-
-#>m4>
-
-0
-1
-3
-1
-1
-1
-3
-m4
-
-:depends (list "define")))
-
-
-(deftest composite-nargs-underquoted ()
-  (m4-test
-#>m4>
-define(underquoted, $#)
-oops)
-underquoted
-m4
-
-#>m4>
-
-0)
-oops
-m4
-
-:depends (list "define")))
-
-
-(deftest composite-echo ()
-  (m4-test
-#>m4>
-define(`echo', `$*')
-define(`arg1', `correct')
-echo(`arg1',    arg2, arg3 , arg4)
-define(`echo', `$@')
-define(`arg1', `error')
-echo(`arg1',    arg2, arg3 , arg4)
-m4
-
-#>m4>
-
-
-correct,arg2,arg3 ,arg4
-
-
-arg1,arg2,arg3 ,arg4
-m4
-
-:depends (list "define")))
-
-
+;;; 5 How to define new macros
+;; 5.4 Deleting a macro
 ; "Undefining a macro inside that macro's expansion is safe; the macro still
 ; expands to the definition that was in effect at the ‘(’"
 (deftest gnu-m4-5.4 ()
@@ -180,6 +85,157 @@ f(bye)m4
 :depends (list "define" "undefine")))
 
 
+;; 5.5 Renaming macros
+(deftest gnu-m4-5.5-1 ()
+  (m4-test
+#>m4>
+define(`zap', defn(`undefine'))
+zap(`undefine')
+undefine(`zap')
+m4
+
+#>m4>
+
+
+undefine(zap)
+m4
+
+:depends (list "define" "defn" "undefine")))
+
+
+(deftest gnu-m4-5.5-2 ()
+  (m4-test
+#>m4>
+define(`foo', `This is `$0'')
+define(`bar', defn(`foo'))
+bar
+m4
+
+#>m4>
+
+
+This is bar
+m4
+
+:depends (list "define" "defn")))
+
+
+(deftest gnu-m4-5.5-3 ()
+  (m4-test
+#>m4>
+define(`string', `The macro dnl is very useful
+')
+string
+defn(`string')
+m4
+
+#>m4>
+
+The macro
+The macro dnl is very useful
+
+m4
+
+:depends (list "define" "defn")))
+
+
+(deftest gnu-m4-5.5-4 ()
+  (m4-test
+#>m4>
+define(`foo', a'a)
+define(`a', `A')
+define(`echo', `$@')
+foo
+defn(`foo')
+echo(foo)
+m4
+
+#>m4>
+
+
+
+A'A
+aA'
+AA'
+m4
+
+:depends (list "define" "defn")))
+
+
+(deftest gnu-m4-5.5-5 ()
+  (m4-test
+#>m4>
+define(`l', `<[>')define(`r', `<]>')
+changequote(`[', `]')
+defn([l])defn([r])
+])
+defn([l], [r])
+m4
+
+#>m4>
+
+
+<[>]defn([r])
+)
+<[>][<]>
+m4
+
+:depends (list "define" "changequote" "defn")))
+
+
+(deftest gnu-m4-5.5-6 ()
+  (m4-test
+#>m4>
+defn(`defn')
+define(defn(`divnum'), `cannot redefine a builtin token')
+divnum
+len(defn(`divnum'))
+m4
+
+#>m4>
+
+
+0
+0
+m4
+
+:error #>m4eof>cl-m4:3:57: define: invalid macro name ignored
+m4eof
+
+:depends (list "defn" "define" "divnum" "len")))
+
+
+; TODO traceon traceoff
+;; (deftest gnu-m4-5.5-7 ()
+;;   (m4-test
+;; #>m4>
+;; define(`a', `A')define(`AA', `b')
+;; traceon(`defn', `define')
+;; defn(`a', `divnum', `a')
+;; define(`mydivnum', defn(`divnum', `divnum'))mydivnum
+;; traceoff(`defn', `define')
+;; m4
+
+;; #>m4>
+
+
+;; AA
+
+
+;; m4
+
+;; :error #>m4eof>cl-m4:stdin:3: cannot concatenate builtin `divnum'
+;; cl-m4trace: -1- defn(`a', `divnum', `a') -> ``A'`A''
+;; cl-m4:stdin:4: cannot concatenate builtin `divnum'
+;; cl-m4:stdin:4: cannot concatenate builtin `divnum'
+;; cl-m4trace: -2- defn(`divnum', `divnum')
+;; cl-m4trace: -1- define(`mydivnum', `')
+;; m4eof
+
+;; :depends (list "define" "traceon" "defn" "divnum" "traceoff")))
+
+
+;; 5.6 Temporarily redefining macros
 (deftest gnu-m4-5.6-1 ()
   (m4-test
 #>m4>
@@ -490,70 +546,6 @@ bar,baz
 m4
 
 :depends (list "shift")))
-
-
-(deftest composite-reverse ()
-  (m4-test
-#>m4>
-define(`reverse', `ifelse(`$#', `0', , `$#', `1', ``$1'',
-                          `reverse(shift($@)), `$1'')')
-reverse
-reverse(`foo')
-reverse(`foo', `bar', `gnats', `and gnus')
-m4
-
-#>m4>
-
-
-foo
-and gnus, gnats, bar, foo
-m4
-
-:depends (list "define" "ifelse" "shift")))
-
-
-; TODO incr
-; depends: define, ifelse, shift, incr, $\d
-;; (deftest composite-cond ()
-;;   (m4-test
-;; #>m4>
-;; define(`cond',
-;; `ifelse(`$#', `1', `$1',
-;;         `ifelse($1, `$2', `$3',
-;;                 `$0(shift(shift(shift($@))))')')')dnl
-;; define(`side', `define(`counter', incr(counter))$1')dnl
-;; define(`example1',
-;; `define(`counter', `0')dnl
-;; ifelse(side(`$1'), `yes', `one comparison: ',
-;;        side(`$1'), `no', `two comparisons: ',
-;;        side(`$1'), `maybe', `three comparisons: ',
-;;        `side(`default answer: ')')counter')dnl
-;; define(`example2',
-;; `define(`counter', `0')dnl
-;; cond(`side(`$1')', `yes', `one comparison: ',
-;;      `side(`$1')', `no', `two comparisons: ',
-;;      `side(`$1')', `maybe', `three comparisons: ',
-;;      `side(`default answer: ')')counter')dnl
-;; example1(`yes')
-;; example1(`no')
-;; example1(`maybe')
-;; example1(`feeling rather indecisive today')
-;; example2(`yes')
-;; example2(`no')
-;; example2(`maybe')
-;; example2(`feeling rather indecisive today')
-;; m4
-
-;; #>m4>
-;; one comparison: 3
-;; two comparisons: 3
-;; three comparisons: 3
-;; default answer: 4
-;; one comparison: 1
-;; two comparisons: 2
-;; three comparisons: 3
-;; default answer: 4
-;; m4))
 
 
 (deftest gnu-m4-7.1-1 ()
@@ -1305,48 +1297,6 @@ m4
 m4
 
 :depends (list "divert" "undivert")))
-
-
-(deftest composite-cleardivert ()
-  (m4-test
-#>m4>
-define(`cleardivert',
-`pushdef(`_n', divnum)divert(`-1')undivert($@)divert(_n)popdef(`_n')')dnl
-divert(`1')
-Diversion one: divnum
-divert(`2')
-Diversion two: divnum
-divert(`3')dnl
-Diversion three: divnum
-cleardivert(1,2)dnl
-m4
-
-#>m4>
-Diversion three: 3
-m4
-
-:depends (list "define" "pushdef" "divnum" "divert" "undivert" "popdef")))
-
-
-(deftest composite-cleardivert-fixed ()
-  (m4-test
-#>m4>
-define(`cleardivert',
-  `pushdef(`_num', divnum)divert(`-1')ifelse(`$#', `0',
-    `undivert`'', `undivert($@)')divert(_num)popdef(`_num')')dnl
-divert(`1')
-Diversion one: divnum
-divert(`2')
-Diversion two: divnum
-divert(`3')
-Diversion three: divnum
-cleardivert`'dnl
-m4
-
-#>m4>
-m4
-
-:depends (list "define" "pushdef" "divnum" "divert" "ifelse" "undivert" "popdef")))
 
 
 (deftest gnu-m4-11.1 ()
