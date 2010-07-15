@@ -44,4 +44,6 @@ open_paren = "\(".
 
 close_paren = "\)".
 
+space = " ".
+
 token = "[^\\n()`'#]".
