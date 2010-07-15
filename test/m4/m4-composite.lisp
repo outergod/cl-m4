@@ -18,20 +18,23 @@
 
 (in-suite m4)
 
+;;; 5 How to define new macros
+;; 5.1 Defining a macro
 ; TODO format
 ;; (deftest composite-array ()
 ;;   (m4-test
 ;; #>m4>
-
+;;
 ;; m4
-
+;;
 ;; #>m4>
-
+;;
 ;; m4
-
+;;
 ;;:depends (list "define" "defn" "format")))
 
 
+;; 5.2 Arguments to macros
 (deftest composite-exch ()
   (m4-test
 #>m4>
@@ -51,6 +54,7 @@ m4
 :depends (list "define")))
 
 
+;; 5.3 Special arguments to macros
 (deftest composite-nargs ()
   (m4-test
 #>m4>
@@ -118,6 +122,8 @@ m4
 
 :depends (list "define")))
 
+
+;; 6.3 Recursion in m4
 (deftest composite-reverse ()
   (m4-test
 #>m4>
@@ -181,6 +187,160 @@ m4
 ;; m4
 ;;
 ;;:depends (list "define" "ifelse" "shift" "incr")))
+
+
+(deftest composite-join ()
+  (m4-test
+#>m4eof>
+include(`join.m4')
+join,join(`-'),join(`-', `'),join(`-', `', `')
+joinall,joinall(`-'),joinall(`-', `'),joinall(`-', `', `')
+join(`-', `1')
+join(`-', `1', `2', `3')
+join(`', `1', `2', `3')
+join(`-', `', `1', `', `', `2', `')
+joinall(`-', `', `1', `', `', `2', `')
+join(`,', `1', `2', `3')
+define(`nargs', `$#')dnl
+nargs(join(`,', `1', `2', `3'))
+m4eof
+
+#>m4>
+
+,,,
+,,,-
+1
+1-2-3
+123
+1-2
+-1---2-
+1,2,3
+1
+m4
+
+:include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
+:depends (list "include" "define" "dnl" "ifelse" "shift" "divert")))
+
+
+(deftest composite-quote ()
+  (m4-test
+#>m4eof>
+include(`quote.m4')
+-quote-dquote-dquote_elt-
+-quote()-dquote()-dquote_elt()-
+-quote(`1')-dquote(`1')-dquote_elt(`1')-
+-quote(`1', `2')-dquote(`1', `2')-dquote_elt(`1', `2')-
+define(`n', `$#')dnl
+-n(quote(`1', `2'))-n(dquote(`1', `2'))-n(dquote_elt(`1', `2'))-
+dquote(dquote_elt(`1', `2'))
+dquote_elt(dquote(`1', `2'))
+m4eof
+
+#>m4>
+
+----
+--`'-`'-
+-1-`1'-`1'-
+-1,2-`1',`2'-`1',`2'-
+-1-1-2-
+``1'',``2''
+``1',`2''
+m4
+
+:include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
+:depends (list "include" "dnl" "define" "divert" "ifelse" "shift")))
+
+
+;; TODO decr
+;; (deftest composite-argn ()
+;;   (m4-test
+;; #>m4>
+;; define(`argn', `ifelse(`$1', 1, ``$2'',
+;;   `argn(decr(`$1'), shift(shift($@)))')')
+;; argn(`1', `a')
+;; define(`foo', `argn(`11', $@)')
+;; foo(`a', `b', `c', `d', `e', `f', `g', `h', `i', `j', `k', `l')
+;; m4
+
+;; #>m4>
+
+;; a
+
+;; k
+;; m4
+
+;; :depends (list "define" "ifelse" "decr" "shift")))
+
+
+;; TODO incr
+;; — Composite: forloop (iterator, start, end, text)
+
+
+;; — Composite: foreach (iterator, paren-list, text)
+;; — Composite: foreachq (iterator, quote-list, text)
+(deftest composite-foreach-1 ()
+  (m4-test
+#>m4eof>
+include(`foreach.m4')
+foreach(`x', (foo, bar, foobar), `Word was: x
+')dnl
+include(`foreachq.m4')
+foreachq(`x', `foo, bar, foobar', `Word was: x
+')dnl
+m4eof
+
+#>m4>
+
+Word was: foo
+Word was: bar
+Word was: foobar
+
+Word was: foo
+Word was: bar
+Word was: foobar
+m4
+
+:include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
+:depends (list "include" "divert" "define" "pushdef" "popdef" "ifelse" "shift" "dnl")))
+
+
+(deftest composite-foreach-2 ()
+  (m4-test
+#>m4eof>
+include(`foreach.m4')
+define(`_case', `  $1)
+    $2=" $1";;
+')dnl
+define(`_cat', `$1$2')dnl
+case $`'1 in
+foreach(`x', `(`(`a', `vara')', `(`b', `varb')', `(`c', `varc')')',
+        `_cat(`_case', x)')dnl
+esac
+m4eof
+
+#>m4>
+
+case $1 in
+  a)
+    vara=" a";;
+  b)
+    varb=" b";;
+  c)
+    varc=" c";;
+esac
+m4
+
+:include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
+:depends (list "include" "divert" "define" "pushdef" "popdef" "ifelse" "shift" "dnl")))
+
+
+
+;; — Composite: stack_foreach (macro, action)
+;; — Composite: stack_foreach_lifo (macro, action)
+;; — Composite: define_blind (name, [value])
+;; — Composite: curry (macro, ...)
+;; — Composite: copy (source, dest)
+;; — Composite: rename (source, dest)
 
 
 (deftest composite-cleardivert ()
