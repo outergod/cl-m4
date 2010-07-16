@@ -91,6 +91,18 @@
                            (string char))))
                    (coerce string 'list)))))
 
+(defun replace-with-region (replacefn &rest args)
+  "replace-with-region replacefn &rest args => closure
+
+Create closure that is suitable for use with CL-PPCRE replacement forms. Created
+closure invokes REPLACEFN against the matched subsequence in the string to be
+searched additionally passing ARGS."
+  #'(lambda (target-string start end match-start match-end reg-starts reg-ends)
+      (declare (ignore start end match-start match-end))
+      (apply replacefn (subseq target-string
+                               (svref reg-starts 0) (svref reg-ends 0))
+             args)))
+
 
 ;; dynamic variables
 (defparameter *m4-lib* (make-hash-table :test #'equal))

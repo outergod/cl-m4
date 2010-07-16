@@ -17,7 +17,7 @@
 (in-package :cl-m4-test-system)
 
 (defpackage :cl-m4-test
-  (:use :cl :cl-m4 :cffi-regex :stefil)
+  (:use :cl :cffi-regex :stefil)
   (:export :all))
 
 (in-package :cl-m4-test)

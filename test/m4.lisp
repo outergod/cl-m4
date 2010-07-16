@@ -28,6 +28,7 @@
 
 (set-dispatch-macro-character #\# #\> #'cl-m4:read-heredoc)
 
+(defvar *m4-runtime-lib*)
 (eval-when (:execute :load-toplevel)
   (deftest test-m4-macro-exists (macro)
     (with-m4-lib
@@ -61,4 +62,4 @@
 
 (defun relative-pathname (pathname)
   (merge-pathnames pathname
-                   (asdf:system-relative-pathname 'cl-m4 "test/m4/")))
+                   (asdf:system-relative-pathname 'cl-m4 "test/")))
