@@ -1,6 +1,7 @@
 cl-m4 - Common Lisp re-implementation of GNU M4
 ===============================================
-TBD
+cl-m4 is a complete M4 implementation from scratch targeted at GNU M4
+compatibility.
 
 cl-m4 is completely written in Common Lisp and licensed under the
 GPLv3+[1]. Please see the file COPYING in the top-level directory of the
