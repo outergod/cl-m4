@@ -25,13 +25,12 @@
 (cl:eval-when (:load-toplevel :execute)
   (asdf:operate 'asdf:load-op 'cffi-grovel))
 
-(asdf:defsystem :evol
+(asdf:defsystem :cl-m4
                 :description "Common Lisp re-implementation of GNU M4"
                 :version "0.0.1"
                 :author "Alexander Kahl <e-user@fsfe.org>"
                 :license "GPLv3+"
-                :depends-on (:external-program :cl-fad :cl-ppcre :alexandria
-                             :unix-options :bordeaux-threads :patron
+                :depends-on (:external-program :cl-ppcre :alexandria
                              :trivial-gray-streams :cffi)
                 :components
                 ((:module "src"
