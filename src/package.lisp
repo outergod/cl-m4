@@ -24,4 +24,4 @@
 (defpackage :cl-m4
   (:use :cl :external-program :alexandria :cffi-regex)
   (:shadow :copy-stream :copy-file)
-  (:export :process-m4))
+  (:export :process-m4 :read-heredoc))
