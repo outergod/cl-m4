@@ -36,13 +36,15 @@
                 ((:module "src"
                           :components
                           ((:file "package")
+                           (:file "ring-buffer" :depends-on ("package"))
+                           (:file "heredoc"     :depends-on ("package" "ring-buffer"))
                            (:module "cffi-regex"
                             :components
                             ((cffi-grovel:grovel-file "cffi-regex-grovel")
                              (:file "cffi-regex"  :depends-on ("cffi-regex-grovel"))
                              (:file "regex"       :depends-on ("cffi-regex")))
                             :depends-on ("package"))
-                           (:file "m4-util")
-                           (:file "m4-lexer")
-                           (:file "m4-builtin" :depends-on ("m4-util"))
-                           (:file "m4-parser" :depends-on ("m4-util" "m4-lexer"))))))
+                           (:file "m4-util" :depends-on ("package"))
+                           (:file "m4-lexer" :depends-on ("package"))
+                           (:file "m4-builtin" :depends-on ("package" "m4-util"))
+                           (:file "m4-parser" :depends-on ("package" "m4-util" "m4-lexer"))))))
