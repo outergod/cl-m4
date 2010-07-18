@@ -26,7 +26,7 @@
                 :version "0.0.1"
                 :author "Alexander Kahl <e-user@fsfe.org>"
                 :license "GPLv3+"
-                :depends-on (:cl-m4 :stefil)
+                :depends-on (:cl-m4 :stefil :cl-heredoc)
                 :components
                 ((:module "test"
                           :components

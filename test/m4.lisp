@@ -26,7 +26,7 @@
 (defsuite m4)
 (in-suite m4)
 
-(set-dispatch-macro-character #\# #\> #'cl-m4:read-heredoc)
+(set-dispatch-macro-character #\# #\> #'cl-heredoc:read-heredoc)
 
 (defvar *m4-runtime-lib*)
 (eval-when (:execute :load-toplevel)

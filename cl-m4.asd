@@ -36,8 +36,6 @@
                 ((:module "src"
                           :components
                           ((:file "package")
-                           (:file "ring-buffer" :depends-on ("package"))
-                           (:file "heredoc"     :depends-on ("package" "ring-buffer"))
                            (:module "cffi-regex"
                             :components
                             ((cffi-grovel:grovel-file "cffi-regex-grovel")
