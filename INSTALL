@@ -1,0 +1,30 @@
+Installation Instructions
+*************************
+
+Copyright (C) 2009, 2010 Alexander Kahl
+
+This file is free documentation;
+ I give unlimited permission to copy, distribute and modify it.
+
+
+Dependencies
+============
+Foundation:
+- Any ANSI-compliant CL implementation
+
+CL libraries (all asdf-install:able):
+- Alexandria       | http://common-lisp.net/project/alexandria/
+- external-program | http://www.cliki.net/external-program
+- CL-FAD           | http://www.cliki.net/CL-FAD
+- CL-PPCRE         | http://www.cliki.net/CL-PPCRE
+- graylex          | http://www.cliki.net/graylex
+- Stefil           | http://common-lisp.net/project/stefil/
+
+Your distribution might provide some of these libraries but the names may
+differ, i.e. try to search for the libraries' names prefixed with `cl-` if not
+already present.
+
+
+Installation
+============
+RTF ASDF manual ;)
