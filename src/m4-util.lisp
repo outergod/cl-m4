@@ -163,7 +163,7 @@ searched additionally passing ARGS."
       (aref stack (1- (fill-pointer stack))))))
 
 (defmacro with-m4-lib (&body body)
-  `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib* :key #'copy-array)))
+  `(let ((*m4-runtime-lib* (alexandria:copy-hash-table *m4-lib* :key #'alexandria:copy-array)))
      ,@body))
 
 (defun make-m4-diversion-table (stream)

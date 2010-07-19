@@ -29,7 +29,7 @@
 (set-dispatch-macro-character #\# #\> #'cl-heredoc:read-heredoc)
 
 (defvar *m4-runtime-lib*)
-(eval-when (:execute :load-toplevel)
+(eval-when (:compile-toplevel :execute :load-toplevel)
   (deftest test-m4-macro-exists (macro)
     (with-m4-lib
      (is (functionp (m4-macro macro))))))

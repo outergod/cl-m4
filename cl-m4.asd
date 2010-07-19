@@ -31,7 +31,7 @@
                 :author "Alexander Kahl <e-user@fsfe.org>"
                 :license "GPLv3+"
                 :depends-on (:external-program :cl-ppcre :alexandria
-                             :cl-fad :trivial-gray-streams :cffi)
+                             :cl-fad :graylex :cffi)
                 :components
                 ((:module "src"
                           :components

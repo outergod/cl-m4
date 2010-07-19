@@ -22,6 +22,6 @@
   (:shadow :regoff-t :size-t :reg-syntax :active-reg :s-reg))
 
 (defpackage :cl-m4
-  (:use :cl :external-program :alexandria :cffi-regex)
+  (:use :cl :external-program :cffi-regex :graylex)
   (:shadow :copy-stream :copy-file)
   (:export :process-m4))
