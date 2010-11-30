@@ -14,12 +14,6 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :cl-m4)
-
-(shadowing-import
- '(m4-macro with-m4-lib *m4-lib* *m4-parse-row* *m4-parse-column*)
- (find-package :cl-m4-test))
-
 (in-package :cl-m4-test)
 
 (in-suite all)
@@ -28,11 +22,9 @@
 
 (set-dispatch-macro-character #\# #\> #'cl-heredoc:read-heredoc)
 
-(defvar *m4-runtime-lib*)
-(eval-when (:compile-toplevel :execute :load-toplevel)
-  (deftest test-m4-macro-exists (macro)
-    (with-m4-lib
-     (is (functionp (m4-macro macro))))))
+(deftest test-m4-macro-exists (macro)
+  (with-m4-lib
+    (is (functionp (m4-macro macro)))))
 
 (defmacro with-m4-error (message &body body)
   (let ((error (gensym)))

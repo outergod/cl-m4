@@ -18,7 +18,8 @@
 
 (defpackage :cl-m4-test
   (:use :cl :cffi-regex :hu.dwim.stefil)
-  (:export :all))
+  (:export :all)
+  (:shadowing-import-from :cl-m4 m4-macro with-m4-lib *m4-lib* *m4-parse-row* *m4-parse-column* *m4-runtime-lib*))
 
 (in-package :cl-m4-test)
 
