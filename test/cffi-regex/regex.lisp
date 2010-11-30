@@ -16,7 +16,7 @@
 
 (in-package :cl-m4-test)
 
-(in-suite all)
+(in-suite root-suite)
 (defsuite cffi-regex)
 (in-suite cffi-regex)
 

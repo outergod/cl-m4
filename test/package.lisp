@@ -17,10 +17,10 @@
 (in-package :cl-m4-test-system)
 
 (defpackage :cl-m4-test
-  (:use :cl :cffi-regex :stefil)
+  (:use :cl :cffi-regex :hu.dwim.stefil)
   (:export :all))
 
 (in-package :cl-m4-test)
 
-(in-root-suite)
+(in-suite root-suite)
 (defsuite all)

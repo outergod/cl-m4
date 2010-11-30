@@ -1,5 +1,5 @@
 ;;;; cl-m4 - cl-m4-test.asd
-;;;; Copyright (C) 2009 2010  Alexander Kahl <e-user@fsfe.org>
+;;;; Copyright (C) 2009, 2010  Alexander Kahl <e-user@fsfe.org>
 ;;;; This file is part of cl-m4.
 ;;;; cl-m4 is free software; you can redistribute it and/or modify
 ;;;; it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
                 :version "0.0.1"
                 :author "Alexander Kahl <e-user@fsfe.org>"
                 :license "GPLv3+"
-                :depends-on (:cl-m4 :stefil :cl-heredoc)
+                :depends-on (:cl-m4 :hu.dwim.stefil :cl-heredoc)
                 :components
                 ((:module "test"
                           :components
