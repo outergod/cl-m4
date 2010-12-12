@@ -18,8 +18,7 @@
 
 (defpackage :cffi-regex
   (:use :cl :cffi)
-  (:export :regex-search :regex-match :regex-compilation-failure :regex-internal-error)
-  (:shadow :regoff-t :size-t :reg-syntax :active-reg :s-reg))
+  (:export :regex-search :regex-match :regex-compilation-failure :regex-internal-error))
 
 (defpackage :cl-m4
   (:use :cl :external-program :cffi-regex :graylex)
