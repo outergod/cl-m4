@@ -29,8 +29,6 @@
 (include "string.h")
 
 ;; c typdefs
-; Please ignore warnings of these types already being defined in package KEYWORD
-; (sic), tested on SBCL.
 (ctype :size-t "size_t")
 (ctype :s-reg "s_reg_t")
 (ctype :active-reg "active_reg_t")
