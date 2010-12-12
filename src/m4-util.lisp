@@ -205,18 +205,19 @@ searched additionally passing ARGS."
                (funcall (macro-token-m4macro token) nil :expansion)
                *m4-quote-end*))
 
-;; (defmacro with-regex-search-handler (regexp string startpos registers &body body)
-;;   `(if regexp
-;;     (handler-case
-;;      (multiple-value-bind (startpos registers)
-;;          (regex-search regexp string)
-;;        ,@body
-;;      (regex-compilation-failure (condition)
-;;        (m4-warn (format nil "bad regular expression: `~a': ~a"
-;;                         regexp condition))
-;;        "0")
-;;      (regex-internal-error ()
-;;        (m4-warn (format nil "error matching regular expression `~a'" regexp))
-;;        "0"))
-;;     (prog1 "0" (m4-warn "too few arguments to builtin `regexp'")))) ; TODO
+(defmacro with-regex-search-handler (regexp string startpos registers &body body)
+  (let ((condition (gensym)))
+    `(handler-case
+         (multiple-value-bind (,startpos ,registers)
+             (regex-search ,regexp ,string)
+           ,@body)
+       (regex-compilation-failure (,condition)
+         (m4-warn (format nil "bad regular expression: `~a': ~a"
+                          ,regexp ,condition))
+         "0")
+       (regex-internal-error ()
+         (m4-warn (format nil "error matching regular expression `~a'" ,regexp))
+         "0"))))
 
+;; (defun regex-search-all (regexp target-string)
+;;   )
