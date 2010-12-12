@@ -1505,3 +1505,30 @@ m4
 m4eof
 
 :depends (list "translit")))
+
+
+;; 11.6 Substituting text by regular expression
+(deftest gnu-m4-11.6-1 ()
+  (m4-test
+#>m4>
+patsubst(`GNUs not Unix', `^', `OBS: ')
+patsubst(`GNUs not Unix', `\<', `OBS: ')
+patsubst(`GNUs not Unix', `\w*', `(\&)')
+patsubst(`GNUs not Unix', `\w+', `(\&)')
+patsubst(`GNUs not Unix', `[A-Z][a-z]+')
+patsubst(`GNUs not Unix', `not', `NOT\')
+m4
+
+#>m4>
+OBS: GNUs not Unix
+OBS: GNUs OBS: not OBS: Unix
+(GNUs)() (not)() (Unix)()
+(GNUs) (not) (Unix)
+GN not
+GNUs NOT Unix
+m4
+
+:error #>m4eof>cl-m4:2:15: Warning: trailing \ ignored in replacement
+m4eof
+
+:depends (list "patsubst")))

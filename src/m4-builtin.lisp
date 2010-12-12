@@ -358,3 +358,5 @@
     (progn
       (m4-warn "too few arguments to builtin `translit'")
       (macro-return string))))
+
+; (defm4macro "patsubst" (string &optional regexp replacement) (:minimum-arguments 1)) ; TODO
