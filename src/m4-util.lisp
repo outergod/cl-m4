@@ -218,6 +218,3 @@ searched additionally passing ARGS."
        (regex-internal-error ()
          (m4-warn (format nil "error matching regular expression `~a'" ,regexp))
          "0"))))
-
-;; (defun regex-search-all (regexp target-string)
-;;   )
