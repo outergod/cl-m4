@@ -304,17 +304,19 @@
 
 (defm4macro "regexp" (string &optional regexp replacement) (:minimum-arguments 1)
   (if regexp
-      (with-regex-search-handler regexp string startpos registers
-        (if startpos
-            (if replacement
-                (let ((replace-result (m4-regex-replace replacement string registers)))
-                  (if (string= "\\" (subseq replace-result (1- (length replace-result))))
-                      (prog1 (subseq replace-result 0 (1- (length replace-result)))
-                        (m4-warn "trailing \\ ignored in replacement"))
-                      replace-result))
-                (write-to-string startpos))
-            (if replacement "" "-1")))
-    (prog1 "0" (m4-warn "too few arguments to builtin `regexp'"))))
+      (with-regex-search-handler regexp
+        (multiple-value-bind (startpos registers)
+            (regex-search regexp string)
+          (if startpos
+              (if replacement
+                  (let ((replace-result (m4-regex-replace replacement string registers)))
+                    (if (string= "\\" (subseq replace-result (1- (length replace-result))))
+                        (prog1 (subseq replace-result 0 (1- (length replace-result)))
+                          (m4-warn "trailing \\ ignored in replacement"))
+                        replace-result))
+                  (write-to-string startpos))
+              (if replacement "" "-1"))))
+      (prog1 "0" (m4-warn "too few arguments to builtin `regexp'"))))
 
 (defm4macro "substr" (string &optional from length) (:minimum-arguments 1)
   (if from
@@ -350,18 +352,10 @@
       (m4-warn "too few arguments to builtin `translit'")
       (macro-return string))))
 
-; (defm4macro "patsubst" (string &optional regexp replacement) (:minimum-arguments 1)) ; TODO
-
 (defm4macro "patsubst" (string &optional regexp replacement) (:minimum-arguments 1)
   (if regexp
-      (with-regex-search-handler regexp string startpos registers
-        (if startpos
-            (if replacement
-                (let ((replace-result (m4-regex-replace replacement string registers)))
-                  (if (string= "\\" (subseq replace-result (1- (length replace-result))))
-                      (prog1 (subseq replace-result 0 (1- (length replace-result)))
-                        (m4-warn "trailing \\ ignored in replacement"))
-                      replace-result))
-                (write-to-string startpos))
-            (if replacement "" "-1")))
-    (prog1 "0" (m4-warn "too few arguments to builtin `patsubst'"))))
+      (with-regex-search-handler regexp
+        (progn (format *standard-output*
+                "Here: ~a~%" (regex-search-all regexp string))
+               ""))
+      (prog1 "0" (m4-warn "too few arguments to builtin `patsubst'"))))

@@ -205,12 +205,10 @@ searched additionally passing ARGS."
                (funcall (macro-token-m4macro token) nil :expansion)
                *m4-quote-end*))
 
-(defmacro with-regex-search-handler (regexp string startpos registers &body body)
+(defmacro with-regex-search-handler (regexp &body body)
   (let ((condition (gensym)))
     `(handler-case
-         (multiple-value-bind (,startpos ,registers)
-             (regex-search ,regexp ,string)
-           ,@body)
+         ,@body
        (regex-compilation-failure (,condition)
          (m4-warn (format nil "bad regular expression: `~a': ~a"
                           ,regexp ,condition))
