@@ -1528,7 +1528,7 @@ GN not
 GNUs NOT Unix
 m4
 
-:error #>m4eof>cl-m4:2:15: Warning: trailing \ ignored in replacement
+:error #>m4eof>cl-m4:7:40: Warning: trailing \ ignored in replacement
 m4eof
 
 :depends (list "patsubst")))
