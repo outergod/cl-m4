@@ -310,10 +310,7 @@
           (if startpos
               (if replacement
                   (let ((replace-result (m4-regex-replace replacement string registers)))
-                    (if (string= "\\" (subseq replace-result (1- (length replace-result))))
-                        (prog1 (subseq replace-result 0 (1- (length replace-result)))
-                          (m4-warn "trailing \\ ignored in replacement"))
-                        replace-result))
+                    (sanitize-m4-regex-replacement replace-result))
                   (write-to-string startpos))
               (if replacement "" "-1"))))
       (prog1 "0" (m4-warn "too few arguments to builtin `regexp'"))))
@@ -352,10 +349,10 @@
       (m4-warn "too few arguments to builtin `translit'")
       (macro-return string))))
 
-(defm4macro "patsubst" (string &optional regexp replacement) (:minimum-arguments 1)
+(defm4macro "patsubst" (string &optional regexp (replacement "")) (:minimum-arguments 1)
   (if regexp
       (with-regex-search-handler regexp
-        (progn (format *standard-output*
-                "Here: ~a~%" (regex-search-all regexp string))
-               ""))
+        (macro-return
+         (m4-regex-replace-all (sanitize-m4-regex-replacement replacement)
+                               string (mapcar #'cdr (regex-search-all regexp string)))))
       (prog1 "0" (m4-warn "too few arguments to builtin `patsubst'"))))

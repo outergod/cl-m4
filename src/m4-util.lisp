@@ -154,6 +154,20 @@ searched additionally passing ARGS."
                                             (nth-match (parse-integer match :junk-allowed nil)))
                                            (t match)))))))
 
+(defun m4-regex-replace-all (template string register-list)
+  (labels ((rec (position register-list acc)
+             (if register-list
+                 (let ((registers (car register-list)))
+                   (destructuring-bind (start end)
+                       (svref registers 0)
+                     (rec end (cdr register-list)
+                          (nconc (list (m4-regex-replace template string registers)
+                                       (subseq string position start))
+                                 acc))))
+                 (apply #'concatenate 'string (nreverse (cons (subseq string position)
+                                                              acc))))))
+    (rec 0 register-list (list))))
+
 (defun macro-return (result)
   (error 'macro-invocation-condition :result result))
 
@@ -216,3 +230,11 @@ searched additionally passing ARGS."
        (regex-internal-error ()
          (m4-warn (format nil "error matching regular expression `~a'" ,regexp))
          "0"))))
+
+(defun sanitize-m4-regex-replacement (replacement)
+  (let ((replacement-length (length replacement)))
+    (if (and (> replacement-length 0)
+             (string= "\\" (subseq replacement (1- replacement-length))))
+        (prog1 (subseq replacement 0 (1- replacement-length))
+          (m4-warn "trailing \\ ignored in replacement"))
+        replacement)))
