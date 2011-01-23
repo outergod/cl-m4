@@ -96,10 +96,11 @@ REGISTERS) matches of REGEX in TARGET-STRING."
                    (multiple-value-bind (startpos matches)
                        (%search buffer registers target-string position end)
                      (if startpos
-                         (rec (+ startpos
-                                 (abs (apply #'- (svref matches 0))))
-                              (cons (cons startpos matches)
-                                    acc))
+                         (let ((match-length (abs (apply #'- (svref matches 0)))))
+                           (rec (+ startpos
+                                   (if (> match-length 0) match-length 1)) ; happens for ^, * and $ matches
+                                (cons (cons startpos matches)
+                                      acc)))
                          (nreverse acc)))))
           (rec start (list)))))))
 
