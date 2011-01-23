@@ -1524,11 +1524,11 @@ OBS: GNUs not Unix
 OBS: GNUs OBS: not OBS: Unix
 (GNUs)() (not)() (Unix)()
 (GNUs) (not) (Unix)
-GN not
+GN not 
 GNUs NOT Unix
 m4
 
-:error #>m4eof>cl-m4:7:40: Warning: trailing \ ignored in replacement
+:error #>m4eof>cl-m4:7:40: trailing \ ignored in replacement
 m4eof
 
 :depends (list "patsubst")))
