@@ -403,7 +403,67 @@ Gnus Not Unix
 m4
 
 :include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
-:depends (list "divert" "define" "translit" "regexp" "patsubst" "dnl")))
+:depends (list "include" "divert" "define" "translit" "regexp" "patsubst" "dnl")))
+
+
+(deftest composite-capitalize-broken ()
+  (m4-test
+#>m4eof>
+include(`capitalize.m4')dnl
+define(`active', `act1, ive')dnl
+define(`Active', `Act2, Ive')dnl
+define(`ACTIVE', `ACT3, IVE')dnl
+upcase(active)
+upcase(`active')
+upcase(``active'')
+downcase(ACTIVE)
+downcase(`ACTIVE')
+downcase(``ACTIVE'')
+capitalize(active)
+capitalize(`active')
+capitalize(``active'')
+define(`A', `OOPS')
+capitalize(active)
+capitalize(`active')
+m4eof
+
+#>m4>
+ACT1,IVE
+ACT3, IVE
+ACTIVE
+act3,ive
+act1, ive
+active
+Act1
+Active
+_capitalize(`active')
+
+OOPSct1
+OOPSctive
+m4
+
+:include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
+:depends (list "include" "divert" "define" "translit" "regexp" "patsubst" "dnl")))
+
+
+(deftest composite-capitalize-fixed ()
+  (m4-test
+#>m4eof>
+include(`capitalize2.m4')dnl
+define(`active', `act1, ive')dnl
+define(`Active', `Act2, Ive')dnl
+define(`ACTIVE', `ACT3, IVE')dnl
+define(`A', `OOPS')dnl
+capitalize(active; `active'; ``active''; ```actIVE''')
+m4eof
+
+#>m4>
+Act1,Ive; Act2, Ive; Active; `Active'
+m4
+
+:include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
+:depends (list "include" "divert" "define" "translit" "changequote" "regexp" "patsubst" "dnl")))
+
 
 (deftest composite-patreg ()
   (m4-test
