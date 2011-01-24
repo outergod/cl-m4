@@ -403,5 +403,24 @@ Gnus Not Unix
 m4
 
 :include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
-:depends (list "divert" "define" "translit" "regexp" "patsubst")))
+:depends (list "divert" "define" "translit" "regexp" "patsubst" "dnl")))
+
+(deftest composite-patreg ()
+  (m4-test
+#>m4>
+define(`patreg',
+`patsubst($@)
+regexp($@)')dnl
+patreg(`bar foo baz Foo', `foo\|Foo', `FOO')
+patreg(`aba abb 121', `\(.\)\(.\)\1', `\2\1\2')
+m4
+
+#>m4>
+bar FOO baz FOO
+FOO
+bab abb 212
+bab
+m4
+
+:depends (list "define" "patsubst" "regexp" "dnl")))
 
