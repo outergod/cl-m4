@@ -383,3 +383,25 @@ m4
 m4
 
 :depends (list "define" "pushdef" "divnum" "divert" "ifelse" "undivert" "popdef")))
+
+
+;; 11.6 Substituting text by regular expression
+(deftest composite-capitalize ()
+  (m4-test
+#>m4eof>
+include(`capitalize.m4')
+upcase(`GNUs not Unix')
+downcase(`GNUs not Unix')
+capitalize(`GNUs not Unix')
+m4eof
+
+#>m4>
+
+GNUS NOT UNIX
+gnus not unix
+Gnus Not Unix
+m4
+
+:include-path (list (relative-pathname "fixtures/gnu-m4-examples/"))
+:depends (list "divert" "define" "translit" "regexp" "patsubst")))
+
