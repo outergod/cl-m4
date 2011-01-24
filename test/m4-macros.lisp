@@ -1532,3 +1532,24 @@ m4
 m4eof
 
 :depends (list "patsubst")))
+
+
+(deftest gnu-m4-11.6-2 ()
+  (m4-test
+#>m4>
+patsubst(`abc')
+patsubst(`abc', `')
+patsubst(`abc', `', `\\-')
+m4
+
+#>m4>
+abc
+abc
+\-a\-b\-c\-
+m4
+
+:error #>m4eof>cl-m4:2:15: too few arguments to builtin `patsubst'
+m4eof
+
+:depends (list "patsubst")))
+
