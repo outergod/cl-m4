@@ -355,4 +355,4 @@
         (macro-return
          (m4-regex-replace-all (sanitize-m4-regex-replacement replacement)
                                string (mapcar #'cdr (regex-search-all regexp string)))))
-      (prog1 "0" (m4-warn "too few arguments to builtin `patsubst'"))))
+      (prog1 string (m4-warn "too few arguments to builtin `patsubst'"))))
