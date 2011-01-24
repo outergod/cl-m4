@@ -310,7 +310,7 @@
           (if startpos
               (if replacement
                   (let ((replace-result (m4-regex-replace replacement string registers)))
-                    (sanitize-m4-regex-replacement replace-result))
+                    (macro-return (sanitize-m4-regex-replacement replace-result)))
                   (write-to-string startpos))
               (if replacement "" "-1"))))
       (prog1 "0" (m4-warn "too few arguments to builtin `regexp'"))))
