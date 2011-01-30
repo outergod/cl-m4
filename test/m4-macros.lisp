@@ -595,6 +595,30 @@ m4eof
 
 
 ;; TODO traceon, traceoff, debugmode, debugfile
+;; 7.2 Tracing macro calls
+(deftest gnu-m4-7.2-1 ()
+  (m4-test
+#>m4>
+define(`foo', `Hello World.')
+define(`echo', `$@')
+traceon(`foo', `echo')
+foo
+echo(`gnus', `and gnats')
+m4
+
+#>m4>
+
+
+
+Hello World.
+gnus,and gnats
+m4
+
+:error #>m4eof>m4trace: -1- foo -> `Hello World.'
+m4trace: -1- echo(`gnus', `and gnats') -> ``gnus',`and gnats''
+m4eof
+
+:depends (list "define" "traceon")))
 
 
 ;;; 8 Input control
