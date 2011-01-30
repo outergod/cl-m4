@@ -202,7 +202,7 @@
          (*m4-quote-end* "'")
          (*m4-comment-start* "#")
          (*m4-comment-end* "\\n")
-         (*m4-macro-name* "[_a-zA-Z]\\w*")
+         (*m4-macro-name* #>|>[_a-zA-Z]\w*|)
          (*m4-wrap-stack* (list))
          (*m4-include-path* (append (reverse prepend-include-path) (list ".") include-path))
          (*m4-diversion* 0)
