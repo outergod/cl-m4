@@ -52,7 +52,12 @@
             (funcall macro macro-name nil)
             (apply macro macro-name nil (split-merge args :separator)))
       (macro-condition (condition)
-        ; TODO
+        (mapc #'(lambda (hook)
+                  (funcall hook macro-name args
+                           (when (eql (type-of condition)
+                                      'macro-invocation-condition)
+                             (macro-invocation-result condition))))
+              *m4-macro-hooks*)
         (signal condition)))))
 
 (defun m4-out (word)
@@ -214,6 +219,8 @@
          (*m4-diversion* 0)
          (*m4-diversion-table* (make-m4-diversion-table output-stream))
          (*m4-nesting-level* 0)
+         (*m4-macro-hooks* (list #'m4-trace-out))
+         (*m4-traced-macros* (list))
          (lexer (make-instance 'm4-input-stream
                                :stream input-stream
                                :rules '((*m4-comment-start* . :comment-start)

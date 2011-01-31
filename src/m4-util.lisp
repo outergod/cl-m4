@@ -119,6 +119,8 @@ searched additionally passing ARGS."
 (defvar *m4-diversion*)
 (defvar *m4-diversion-table*)
 (defvar *m4-nesting-level*)
+(defvar *m4-macro-hooks*)
+(defvar *m4-traced-macros*)
 (defvar *m4-parse-row*)
 (defvar *m4-parse-column*)
 
@@ -132,6 +134,11 @@ searched additionally passing ARGS."
     (format *error-output* "cl-m4:~a:~a: ~a~%" (boundp-or-? '*m4-parse-row*)
                                                (boundp-or-? '*m4-parse-column*)
                                                datum)))
+
+(defun m4-trace-out (macro args result)
+  (declare (ignore args))
+  (when (find macro *m4-traced-macros* :test #'string=)
+    (format *error-output* "cl-m4trace: -~d- ~a~@[ -> ~a~]~%" *m4-nesting-level* macro result)))
 
 (defun m4-quote-string (string)
   (concatenate 'string
