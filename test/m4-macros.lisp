@@ -614,8 +614,8 @@ Hello World.
 gnus,and gnats
 m4
 
-:error #>m4eof>m4trace: -1- foo -> `Hello World.'
-m4trace: -1- echo(`gnus', `and gnats') -> ``gnus',`and gnats''
+:error #>m4eof>cl-m4trace: -1- foo -> `Hello World.'
+cl-m4trace: -1- echo(`gnus', `and gnats') -> ``gnus',`and gnats''
 m4eof
 
 :depends (list "define" "traceon")))
