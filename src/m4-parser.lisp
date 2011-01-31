@@ -47,9 +47,13 @@
 (defun call-m4-macro (macro macro-name args lexer)
   (let ((*m4-parse-row* (lexer-row lexer))
         (*m4-parse-column* (lexer-column lexer)))
-    (if (not args)
-        (funcall macro macro-name nil)
-      (apply macro macro-name nil (split-merge args :separator)))))
+    (handler-case
+        (if (not args)
+            (funcall macro macro-name nil)
+            (apply macro macro-name nil (split-merge args :separator)))
+      (macro-condition (condition)
+        ; TODO
+        (signal condition)))))
 
 (defun m4-out (word)
   (with-m4-diversion-stream (out)
@@ -149,7 +153,9 @@
                (m4-warn "end of file treated as newline"))))))))
 
 (defun parse-m4-macro (lexer macro-name)
-  (let ((macro (m4-macro macro-name)))
+  (let ((macro (m4-macro macro-name))
+        (level *m4-nesting-level*)
+        (*m4-nesting-level* (1+ *m4-nesting-level*)))
     (if (not macro)
         macro-name
       (handler-case
@@ -202,11 +208,12 @@
          (*m4-quote-end* "'")
          (*m4-comment-start* "#")
          (*m4-comment-end* "\\n")
-         (*m4-macro-name* #>|>[_a-zA-Z]\w*|)
+         (*m4-macro-name* "[_a-zA-Z]\\w*")
          (*m4-wrap-stack* (list))
          (*m4-include-path* (append (reverse prepend-include-path) (list ".") include-path))
          (*m4-diversion* 0)
          (*m4-diversion-table* (make-m4-diversion-table output-stream))
+         (*m4-nesting-level* 0)
          (lexer (make-instance 'm4-input-stream
                                :stream input-stream
                                :rules '((*m4-comment-start* . :comment-start)

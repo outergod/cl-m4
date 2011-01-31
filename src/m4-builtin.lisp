@@ -116,8 +116,8 @@
          "")
         ((and (= 1 (length args))
               (m4-macro (car args) t)) ; builtin macro
-         (error 'macro-defn-invocation-condition
-                :macro (make-macro-token (m4-macro (car args) t) (car args))))
+         (signal 'macro-defn-invocation-condition
+                 :macro (make-macro-token (m4-macro (car args) t) (car args))))
         (t (macro-return
             (apply #'concatenate 'string            
                    (mapcar #'(lambda (name)
@@ -211,7 +211,7 @@
 ;; TODO traceon, traceoff, debugmode, debugfile
 
 (defm4macro "dnl" () (:arguments-only nil)
-  (error 'macro-dnl-invocation-condition))
+  (signal 'macro-dnl-invocation-condition))
 
 (defm4macro "changequote" (&optional (start "`") (end "'")) (:arguments-only nil)
   (prog1 ""
@@ -240,7 +240,7 @@
                                                     (read-sequence string stream)
                                                     string)))
                       (macro-invocation-condition (condition)
-                        (error condition))
+                        (signal condition))
                       (condition ()
                         (format nil "cannot open `~a': Permission denied" original-arg))))))
          (m4-include (path warnfn)
@@ -334,7 +334,7 @@
                (macro-return (subseq string start end))
              ""))
          (macro-invocation-condition (condition)
-           (error condition))
+           (signal condition))
          (condition ()
            (m4-warn "non-numeric argument to builtin `substr'")
            "")))

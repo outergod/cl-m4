@@ -21,13 +21,15 @@
 (defstruct (macro-token (:constructor make-macro-token (m4macro name)))
   m4macro name)
 
-(define-condition macro-invocation-condition (error)
+(define-condition macro-condition (error) ())
+
+(define-condition macro-invocation-condition (macro-condition)
   ((result :initarg :result
            :reader macro-invocation-result)))
 
-(define-condition macro-dnl-invocation-condition (error) ())
+(define-condition macro-dnl-invocation-condition (macro-condition) ())
 
-(define-condition macro-defn-invocation-condition (error)
+(define-condition macro-defn-invocation-condition (macro-condition)
   ((macro :initarg :macro
           :reader macro-defn-invocation-result)))
 
@@ -116,6 +118,7 @@ searched additionally passing ARGS."
 (defvar *m4-include-path*)
 (defvar *m4-diversion*)
 (defvar *m4-diversion-table*)
+(defvar *m4-nesting-level*)
 (defvar *m4-parse-row*)
 (defvar *m4-parse-column*)
 
