@@ -135,16 +135,16 @@ searched additionally passing ARGS."
                                                (boundp-or-? '*m4-parse-column*)
                                                datum)))
 
-(defun m4-trace-out (macro args result)
-  (declare (ignore args))
-  (when (find macro *m4-traced-macros* :test #'string=)
-    (format *error-output* "cl-m4trace: -~d- ~a~@[ -> ~a~]~%" *m4-nesting-level* macro result)))
-
 (defun m4-quote-string (string)
   (concatenate 'string
                (unquote-regexp *m4-quote-start*)
                string
                (unquote-regexp *m4-quote-end*)))
+
+(defun m4-trace-out (macro args result)
+  (when (find macro *m4-traced-macros* :test #'string=)
+    (format *error-output* "cl-m4trace: -~d- ~a~@[(~{~a~^, ~})~]~@[ -> ~a~]~%"
+            *m4-nesting-level* macro (mapcar #'m4-quote-string args) (m4-quote-string result))))
 
 (defun m4-regex-replace (template string registers)
   (flet ((nth-match (index)

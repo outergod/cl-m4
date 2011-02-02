@@ -594,7 +594,7 @@ m4eof
 :depends (list "pushdef" "popdef" "dumpdef")))
 
 
-;; TODO traceon, traceoff, debugmode, debugfile
+;; TODO debugmode, debugfile
 ;; 7.2 Tracing macro calls
 (deftest gnu-m4-7.2-1 ()
   (m4-test
@@ -620,6 +620,7 @@ m4eof
 
 :depends (list "define" "traceon")))
 
+; TODO -2
 
 ;;; 8 Input control
 ;; 8.1 Deleting whitespace in input

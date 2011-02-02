@@ -208,7 +208,12 @@
                         #'string<))
       (format *error-output* "~a~%" name))))
 
-;; TODO traceon, traceoff, debugmode, debugfile
+;; TODO debugmode, debugfile
+(defm4macro "traceon" (&rest args) (:arguments-only nil)
+  (prog1 "" (setq *m4-traced-macros* (append args *m4-traced-macros*))))
+
+(defm4macro "traceoff" (&rest args) (:arguments-only nil)
+  (prog1 "" (setq *m4-traced-macros* (nset-difference *m4-traced-macros* args))))
 
 (defm4macro "dnl" () (:arguments-only nil)
   (signal 'macro-dnl-invocation-condition))

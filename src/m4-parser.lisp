@@ -46,14 +46,13 @@
 
 (defun call-m4-macro (macro macro-name args lexer)
   (let ((*m4-parse-row* (lexer-row lexer))
-        (*m4-parse-column* (lexer-column lexer)))
+        (*m4-parse-column* (lexer-column lexer))
+        (macro-args (and args (split-merge args :separator))))
     (handler-case
-        (if (not args)
-            (funcall macro macro-name nil)
-            (apply macro macro-name nil (split-merge args :separator)))
+        (apply macro macro-name nil macro-args)
       (macro-condition (condition)
         (mapc #'(lambda (hook)
-                  (funcall hook macro-name args
+                  (funcall hook macro-name macro-args
                            (when (eql (type-of condition)
                                       'macro-invocation-condition)
                              (macro-invocation-result condition))))
