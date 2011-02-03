@@ -620,7 +620,29 @@ m4eof
 
 :depends (list "define" "traceon")))
 
-; TODO -2
+
+(deftest gnu-m4-7.2-2 ()
+  (m4-test
+#>m4>
+ifelse(`one level')
+ifelse(ifelse(ifelse(`three levels')))
+ifelse(ifelse(ifelse(ifelse(`four levels'))))
+m4
+
+#>m4>
+
+
+m4
+
+:error #>m4eof>cl-m4trace: -1- ifelse
+cl-m4trace: -3- ifelse
+cl-m4trace: -2- ifelse
+cl-m4trace: -1- ifelse
+cl-m4:stdin:3: recursion limit of 3 exceeded, use -L<N> to change it
+m4eof
+
+:depends (list "define" "traceon")))
+
 
 ;;; 8 Input control
 ;; 8.1 Deleting whitespace in input

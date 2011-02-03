@@ -33,6 +33,10 @@
   ((macro :initarg :macro
           :reader macro-defn-invocation-result)))
 
+(define-condition macro-nesting-level-excession-condition (macro-condition)
+  ((limit :initarg :limit
+          :reader nesting-level-limit)))
+
 
 ;; utilities
 (defun quote-regexp (string)
@@ -119,6 +123,7 @@ searched additionally passing ARGS."
 (defvar *m4-diversion*)
 (defvar *m4-diversion-table*)
 (defvar *m4-nesting-level*)
+(defvar *m4-nesting-limit*)
 (defvar *m4-macro-hooks*)
 (defvar *m4-traced-macros*)
 (defvar *m4-parse-row*)

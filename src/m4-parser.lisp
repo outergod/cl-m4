@@ -162,23 +162,28 @@
         (*m4-nesting-level* (1+ *m4-nesting-level*)))
     (if (not macro)
         macro-name
-      (handler-case
-       (multiple-value-bind (class image)
-           (stream-read-token lexer t)
-         (declare (ignore image))
-         (if (equal :open-paren class)
-             (progn
-               (stream-read-token lexer) ; consume token
-               (call-m4-macro macro macro-name (parse-m4-macro-arguments lexer) lexer))
-           (call-m4-macro macro macro-name nil lexer)))
-       (macro-dnl-invocation-condition ()
-         (parse-m4-dnl lexer))
-       (macro-defn-invocation-condition (condition)
-         (prog1 ""
-           (m4-push-macro lexer (macro-defn-invocation-result condition))))
-       (macro-invocation-condition (condition)
-         (prog1 ""
-           (lexer-unread-sequence lexer (macro-invocation-result condition))))))))
+        (if (and *m4-nesting-limit*
+                 (> *m4-nesting-level* *m4-nesting-limit*))
+            (progn
+              (m4-warn (format nil "recursion limit of ~d exceeded, use -L<N> to change it" *m4-nesting-limit*))
+              (error 'macro-nesting-level-excession-condition :limit *m4-nesting-limit*))
+            (handler-case
+                (multiple-value-bind (class image)
+                    (stream-read-token lexer t)
+                  (declare (ignore image))
+                  (if (equal :open-paren class)
+                      (progn
+                        (stream-read-token lexer) ; consume token
+                        (call-m4-macro macro macro-name (parse-m4-macro-arguments lexer) lexer))
+                      (call-m4-macro macro macro-name nil lexer)))
+              (macro-dnl-invocation-condition ()
+                (parse-m4-dnl lexer))
+              (macro-defn-invocation-condition (condition)
+                (prog1 ""
+                  (m4-push-macro lexer (macro-defn-invocation-result condition))))
+              (macro-invocation-condition (condition)
+                (prog1 ""
+                  (lexer-unread-sequence lexer (macro-invocation-result condition)))))))))
 
 (defun parse-m4 (lexer)
   (do* ((token (multiple-value-list (stream-read-token lexer))
@@ -207,7 +212,7 @@
 
 
 ;; Top-level M4 API
-(defun process-m4 (input-stream output-stream &key (include-path (list)) (prepend-include-path (list)))
+(defun process-m4 (input-stream output-stream &key (include-path (list)) (prepend-include-path (list)) (trace-functions (list)) nesting-limit)
   (let* ((*m4-quote-start* "`")
          (*m4-quote-end* "'")
          (*m4-comment-start* "#")
@@ -218,8 +223,9 @@
          (*m4-diversion* 0)
          (*m4-diversion-table* (make-m4-diversion-table output-stream))
          (*m4-nesting-level* 0)
+         (*m4-nesting-limit* nesting-limit)
          (*m4-macro-hooks* (list #'m4-trace-out))
-         (*m4-traced-macros* (list))
+         (*m4-traced-macros* trace-functions)
          (lexer (make-instance 'm4-input-stream
                                :stream input-stream
                                :rules '((*m4-comment-start* . :comment-start)
