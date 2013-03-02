@@ -30,37 +30,61 @@
   (start :pointer)
   (end :pointer))
 
-(defcfun ("re_set_syntax" set-syntax) :reg-syntax (syntax :reg-syntax))
+(defctype registers (:struct registers))
+
+(defctype pattern-buffer (:struct pattern-buffer))
+
+(defcfun ("re_set_syntax" set-syntax) reg-syntax
+  (syntax reg-syntax))
 
 (defcfun ("re_compile_pattern" compile-pattern) :string
-  (pattern :string) (length :size-t) (buffer pattern-buffer))
+  (pattern :string)
+  (length size-t)
+  (buffer (:pointer pattern-buffer)))
 
-(defcfun ("re_compile_fastmap" compile-fastmap) :int (buffer pattern-buffer))
+(defcfun ("re_compile_fastmap" compile-fastmap) :int
+  (buffer (:pointer pattern-buffer)))
 
 (defcfun ("re_search" %regex-search) :int
-  (buffer pattern-buffer) (string :string) (length :int) (start :int)
-  (range :int) (registers registers))
+  (buffer (:pointer pattern-buffer))
+  (string :string)
+  (length :int)
+  (start :int)
+  (range :int)
+  (registers (:pointer registers)))
 
 (defcfun ("re_search_2" %regex-search-2) :int
-  (buffer pattern-buffer)
-  (string1 :string) (length1 :int)
-  (string2 :string) (length2 :int)
-  (start :int) (range :int)
-  (registers registers)
+  (buffer (:pointer pattern-buffer))
+  (string1 :string)
+  (length1 :int)
+  (string2 :string)
+  (length2 :int)
+  (start :int)
+  (range :int)
+  (registers (:pointer registers))
   (stop :int))
 
 (defcfun ("re_match" %regex-match) :int
-  (buffer pattern-buffer) (string :string) (length :int) (start :int)
-  (registers registers))
+  (buffer (:pointer pattern-buffer))
+  (string :string)
+  (length :int)
+  (start :int)
+  (registers (:pointer registers)))
 
 (defcfun ("re_match_2" %regex-match-2) :int
-  (buffer pattern-buffer)
-  (string1 :string) (length1 :int)
-  (string2 :string) (length2 :int)
-  (start :int) (range :int)
-  (registers registers)
+  (buffer (:pointer pattern-buffer))
+  (string1 :string)
+  (length1 :int)
+  (string2 :string)
+  (length2 :int)
+  (start :int)
+  (range :int)
+  (registers (:pointer registers))
   (stop :int))
 
 (defcfun ("re_set_registers" %regex-set-registers) :void
-  (buffer pattern-buffer) (registers registers)
-  (num-regs :unsigned-int) (starts :regoff) (ends :regoff))
+  (buffer (:pointer pattern-buffer))
+  (registers (:pointer registers))
+  (num-regs :unsigned-int)
+  (starts regoff)
+  (ends regoff))
