@@ -55,10 +55,10 @@ Return START and END of register match # INDEX in libc regex REGISTERS
   (values
    (mem-aref
     (mem-aref (foreign-slot-pointer registers 'registers 'start) :pointer)
-    :regoff index)
+    'regoff index)
    (mem-aref
     (mem-aref (foreign-slot-pointer registers 'registers 'end) :pointer)
-    :regoff index)))
+    'regoff index)))
 
 (flet ((%search (buffer registers target-string start end)
          (let ((startpos (%regex-search buffer target-string (length target-string)
